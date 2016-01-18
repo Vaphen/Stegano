@@ -1,0 +1,8 @@
+Stegano+.cbp
+Stegano+.layout
+Stegano+.depend
+doxygen/*
+obj/*
+wxsmith/*
+bin/*
+gmon.out
