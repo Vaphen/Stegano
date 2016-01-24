@@ -4,36 +4,33 @@ SteganoUnhide::SteganoUnhide() { }
 
 SteganoUnhide::~SteganoUnhide() { }
 
-// TODO: shorten this method and outsource some inner methods and add header comment
+// TODO: shorten this method and outsource some inner methods
 std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
-    Chunk hiddenChunk("vaPh");
-    PrivateChunk privChunk("./stegano.png", "./omg.png");
-    char *chunkData = new char[privChunk.getChunkSize(hiddenChunk)];
-    privChunk.readChunk(hiddenChunk, chunkData);
-    commentReaderStream.str(chunkData);
-    calculateNextShift();
-
     Pixel curPixel(0, 0);
     std::stringstream returnPhrase;
     for(unsigned int runCounter = 0; ;runCounter++) {
         curPixel.x = 0;
         curPixel.y = 0;
-        int_least64_t steps = quadraticSondation(runCounter, this->xResolution * this->yResolution);
-     //   std::cout << "Push by" << steps << std::endl;
+        int steps = quadraticSondation(runCounter, this->xResolution * this->yResolution);
+       // std::cout << "Push by" << steps << std::endl;
         pushPixelBy(curPixel, steps);
       //  std::cout << curPixel.x << ":" << curPixel.y << std::endl;
 
-        if(runCounter == shiftIndex) {
-            pushPixelBy(curPixel, shiftAmount);
-          //  std::cout << runCounter << ":" << shiftAmount << std::endl;
-            calculateNextShift();
+        Pixel nextPixel(curPixel);
+        incrementPixel(nextPixel);
+        while(!isPixelEmpty(curPixel) || !isPixelEmpty(nextPixel)) {
+            incrementPixel(curPixel);
+            incrementPixel(nextPixel);
         }
-       // std::cout << curPixel.x << "::" << curPixel.y << std::endl;
+        std::cout << curPixel.x << ":" << curPixel.y << std::endl;
         Magick::ColorRGB curPixelColor = this->steganoImage.pixelColor(curPixel.x, curPixel.y);
 
         unsigned char redLeastSignificantBit = convert16BitTo8BitRGB(curPixelColor.redQuantum()) % 10;
         unsigned char greenLeastSignificantBit = convert16BitTo8BitRGB(curPixelColor.greenQuantum()) % 10;
         unsigned char blueLeastSignificantBit = convert16BitTo8BitRGB(curPixelColor.blueQuantum()) % 10;
+
+        // save that we already decrypted the current Pixel
+        usedPixels.insert(Pixel(curPixel));
 
         // there was an overflow at the pixel color. we need to handle it special.
         unsigned char decryptedChar = 0;
@@ -42,6 +39,7 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
             decryptedChar += blueLeastSignificantBit;
             incrementPixel(curPixel);
 
+            usedPixels.insert(Pixel(curPixel));
             curPixelColor = this->steganoImage.pixelColor(curPixel.x, curPixel.y);
             redLeastSignificantBit = convert16BitTo8BitRGB(curPixelColor.redQuantum()) % 10;
             greenLeastSignificantBit = convert16BitTo8BitRGB(curPixelColor.greenQuantum()) % 10;
@@ -62,28 +60,3 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
     return returnPhrase;
 }
 
-/** \brief Checks if the given Pixel is empty (not used). It is empty, if least significant bits are all 0.
- * \param pixel const Pixel& the pixel that should be checked
- * \return bool true if pixel is not used until now, else false
- */
-bool SteganoUnhide::isPixelEmpty(const Pixel &pixel) {
-    // not used until now
-   return true;
-}
-
-
-/** \brief calculate the next shift index and amount out of the commentReaderStream
- * The variables shiftIndex and shiftAmount are set by a line of commentReaderStream.
- * The input should be formatted as loopIteration:skipAmount\nloopIteration:skipAmount\n....
- */
-void SteganoUnhide::calculateNextShift() {
-    std::string curEntry;
-    std::getline(commentReaderStream, curEntry, '\n');
-    size_t posOfColon = curEntry.find(':');
-
-    if(posOfColon != std::string::npos) {
-        shiftIndex = std::stoi(curEntry.substr(0, posOfColon));
-        shiftAmount = std::stoi(curEntry.substr(posOfColon + 1, curEntry.size()));
-    }
-   // std::cout << shiftIndex << ":" << shiftAmount << std::endl;
-}

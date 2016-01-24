@@ -8,6 +8,7 @@
 #include "SteganoExceptions.h"
 #include "SteganoStructs.h"
 #include "Stegano.h"
+#include "PrivateChunk.h"
 
 class SteganoHide : public Stegano
 {
@@ -28,6 +29,7 @@ class SteganoHide : public Stegano
         Pixel calculateHidingPosition(const unsigned int &);
         unsigned short calculateOverflowNumber(const unsigned char &);
         unsigned short calculateNumberAfterOverflow(const unsigned char &);
+        bool isPixelEmpty(const Pixel &);
         void normalizeImage();
 
 

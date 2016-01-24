@@ -1,6 +1,6 @@
 #include "test.h"
 
-IMPLEMENT_APP(MyApp);
+//IMPLEMENT_APP(MyApp);
 
 bool MyApp::OnInit() {
     GUI *frame = new GUI();
@@ -139,12 +139,12 @@ void unhideFile() {
     outputFileStream.close();
 }
 
-//int main(int argc,char **argv)
-//{
+int main(int argc,char **argv)
+{
  //   MyApp myApp;
-   // Magick::InitializeMagick(*argv);
+    Magick::InitializeMagick(*argv);
 
-   /* std::string menuOption;
+    std::string menuOption;
     unsigned char userInput;
     getUserMenuOption(menuOption);
 
@@ -168,8 +168,8 @@ void unhideFile() {
     case 4:
         unhideFile();
         break;
-    }*/
+    }
 
- //   return 0;
-//}
+    return 0;
+}
 

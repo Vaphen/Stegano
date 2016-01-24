@@ -139,21 +139,6 @@ int_least64_t Stegano::quadraticSondation(const unsigned int &index, const unsig
     return (int_least64_t)std::pow(-1, index) * ((int_least64_t)std::pow(index, 2) % maxSize);
 }
 
-/** \brief Checks if the given Pixel is empty (not used). It is empty, if least significant bits are all 0.
- * \param pixel const Pixel& the pixel that should be checked
- * \return bool true if pixel is not used until now, else false
- */
-bool Stegano::isPixelEmpty(const Pixel &pixel) {
-    Magick::ColorRGB pixelColor = this->steganoImage.pixelColor(pixel.x, pixel.y);
-
-    const unsigned char redLeastSignificantBit = convert16BitTo8BitRGB(pixelColor.redQuantum()) % 10;
-    const unsigned char greenLeastSignificantBit = convert16BitTo8BitRGB(pixelColor.greenQuantum()) % 10;
-    const unsigned char blueLeastSignificantBit = convert16BitTo8BitRGB(pixelColor.blueQuantum()) % 10;
-  //  std::cout << (int)redLeastSignificantBit << ":" << (int)greenLeastSignificantBit << ":" << (int)blueLeastSignificantBit << std::endl;
-
-    return (redLeastSignificantBit == 0 && greenLeastSignificantBit == 0 && blueLeastSignificantBit == 0);
-}
-
 /** \brief Returns the size of a ifstream (the size of its file) in bytes
  * \param fileStream std::ifstream& the filestreams size (= the size of the belonging file)
  * \return unsigned int the size of the filestream in bytes

@@ -7,7 +7,11 @@ SteganoHide::~SteganoHide() { }
 /** \brief Save the created image to disk.
  */
 void SteganoHide::saveChangesToDisk() {
-    this->steganoImage.write("stegano.png");
+    this->steganoImage.write("/tmp/stegano.png");
+    Chunk hideChunk("vaPh");
+    PrivateChunk privChunk("/tmp/stegano.png", "stegano.png");
+    privChunk.addChunk(hideChunk, this->usedPixels.c_str(), this->usedPixels.size());
+    privChunk.finish();
 }
 
 /** \brief Hide a phrase (string) in the loaded picture
@@ -96,14 +100,35 @@ Pixel SteganoHide::calculateHidingPosition(const unsigned int &pixelNum) {
     Pixel nextPixel(returnPixel);
     incrementPixel(nextPixel);
 
+    int shiftings = 0;
     while(!isPixelEmpty(returnPixel) || !isPixelEmpty(nextPixel)) {
         incrementPixel(returnPixel);
         incrementPixel(nextPixel);
-        //std::cout << "inc" << std::endl;
+        shiftings++;
+    }
+    // save shiftings in comments that we can restore them on exposing hidden information
+    if(shiftings != 0) {
+        this->usedPixels += std::to_string(pixelNum) + ":" + std::to_string(shiftings) + "\n";
+        //this->steganoImage.comment(this->steganoImage.comment() + std::to_string(pixelNum) + ":" + std::to_string(shiftings) + "\n");
     }
     return returnPixel;
 }
 
+
+/** \brief Checks if the given Pixel is empty (not used). It is empty, if least significant bits are all 0.
+ * \param pixel const Pixel& the pixel that should be checked
+ * \return bool true if pixel is not used until now, else false
+ */
+bool SteganoHide::isPixelEmpty(const Pixel &pixel) {
+    Magick::ColorRGB pixelColor = this->steganoImage.pixelColor(pixel.x, pixel.y);
+
+    const unsigned char redLeastSignificantBit = convert16BitTo8BitRGB(pixelColor.redQuantum()) % 10;
+    const unsigned char greenLeastSignificantBit = convert16BitTo8BitRGB(pixelColor.greenQuantum()) % 10;
+    const unsigned char blueLeastSignificantBit = convert16BitTo8BitRGB(pixelColor.blueQuantum()) % 10;
+  //  std::cout << (int)redLeastSignificantBit << ":" << (int)greenLeastSignificantBit << ":" << (int)blueLeastSignificantBit << std::endl;
+
+    return (redLeastSignificantBit == 5 && greenLeastSignificantBit == 5 && blueLeastSignificantBit == 5);
+}
 
 /** \brief Hide a letter at the specified pixelposition.
  * The letter is hidden as ASCII-value in the least-significant bits of the RGB-Value of the specified pixel.
@@ -270,9 +295,9 @@ void SteganoHide::normalizeImage() {
             RGB curPixelRGB(convert16BitTo8BitRGB(curPixelColor.redQuantum()),
                             convert16BitTo8BitRGB(curPixelColor.greenQuantum()),
                             convert16BitTo8BitRGB(curPixelColor.blueQuantum()));
-            RGB curPixelRoundedRGB(curPixelRGB.red - (curPixelRGB.red % 10),
-                                   curPixelRGB.green - (curPixelRGB.green % 10),
-                                   curPixelRGB.blue - (curPixelRGB.blue % 10));
+            RGB curPixelRoundedRGB(curPixelRGB.red - (curPixelRGB.red % 10) + 5,
+                                   curPixelRGB.green - (curPixelRGB.green % 10) + 5,
+                                   curPixelRGB.blue - (curPixelRGB.blue % 10) + 5);
             this->steganoImage.pixelColor(xValue, yValue, Magick::ColorRGB(getRGBString(curPixelRoundedRGB)));
         }
     }

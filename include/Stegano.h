@@ -28,12 +28,13 @@ class Stegano
         void incrementPixel(Pixel &);
         unsigned char convert16BitTo8BitRGB(const unsigned int &);
         int_least64_t quadraticSondation(const unsigned int &, const unsigned int &);
-        bool isPixelEmpty(const Pixel &);
+        virtual bool isPixelEmpty(const Pixel &) = 0;
         inline int mod(const int &x, const int &m);
         unsigned int getFileStreamSizeInBytes(std::ifstream &);
 
         double xResolution;
         double yResolution;
+        std::string usedPixels;
     private:
 };
 

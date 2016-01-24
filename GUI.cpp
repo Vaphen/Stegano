@@ -14,12 +14,14 @@
 #include "include/Strings.h"
 
 #define ID_Hello 1
+#define ID_Start 2
 
 
 BEGIN_EVENT_TABLE(GUI,wxFrame)
     EVT_MENU(ID_Hello,   GUI::OnHello)
     EVT_MENU(wxID_EXIT,  GUI::OnExit)
     EVT_MENU(wxID_ABOUT, GUI::OnAbout)
+    EVT_MENU(ID_Start, GUI::OnStart)
 END_EVENT_TABLE()
 
 GUI::GUI()
@@ -116,6 +118,10 @@ void GUI::createMenuBar() {
     SetMenuBar(menuBar);
     CreateStatusBar();
     SetStatusText(std::string("Stegano+ V.").append(VERSION));
+}
+
+void GUI::OnStart(wxCommandEvent &event) {
+  //  Stegano
 }
 
 void GUI::OnHello(wxCommandEvent& event) {

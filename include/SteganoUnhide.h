@@ -8,6 +8,7 @@
 #include "SteganoExceptions.h"
 #include "SteganoStructs.h"
 #include "Stegano.h"
+#include "PrivateChunk.h"
 
 class SteganoUnhide : public Stegano
 {
@@ -18,6 +19,12 @@ class SteganoUnhide : public Stegano
         std::stringstream unhidePhrase(const std::string &);
     protected:
     private:
+        bool isPixelEmpty(const Pixel &);
+        void calculateNextShift();
+
+        unsigned int shiftIndex;
+        unsigned int shiftAmount;
+        std::stringstream commentReaderStream;
 };
 
 #endif // STEGANOUNHIDE_H

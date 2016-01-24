@@ -1,0 +1,16 @@
+/***********************************************************
+ *		Controlcodes of Stegano+		   *
+ *	All codes in this file are used to describe        *
+ *	some special behavior of Stegano+. These codes     *
+ *	are should not be used.				   *
+ *							   *
+ ***********************************************************/
+
+
+RGB (always least significant bits)
+------------------------------------------------------------------
+555 - Used to normalize the picture while hiding some data.
+4XX - Overflow: NEVER EVER use a number starting with 4.
+300 - Finish-Byte: The whole data has been exposed. The algorithm stops.
+
+All below 255 - Default pixels or pixels with hidden data.
