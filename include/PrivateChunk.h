@@ -67,9 +67,59 @@ class PrivateChunk {
         std::fstream::pos_type getPositionOf(Chunk &);
         uint32_t convertCharArrayToInt(char *, const unsigned int &);
         uint32_t endianConversation(uint32_t);
+        uint32_t calculateCRC(const std::string &);
 
         std::ifstream inputStream;
         std::ofstream outputStream;
+};
+
+
+/**
+ * \brief This crc-calculation was found at https://www.w3.org/TR/PNG-CRCAppendix.html and modified to work
+ * a bit better in a c++ way. We don't have to understand what it's doing; however it works.
+ */
+struct CRC {
+    private:
+       uint32_t crcTable[256];
+
+       bool crcTableComputed = false;
+
+       void makeCrcTable() {
+         uint32_t curTableValue;
+
+         for (unsigned int outerLoopCounter = 0; outerLoopCounter < 256; outerLoopCounter++) {
+           curTableValue = outerLoopCounter;
+           for (unsigned int innerLoopCount = 0; innerLoopCount < 8; innerLoopCount++) {
+             if (curTableValue & 1) {
+               curTableValue = 0xedb88320L ^ (curTableValue >> 1);
+             } else {
+               curTableValue = curTableValue >> 1;
+             }
+           }
+           crcTable[outerLoopCounter] = curTableValue;
+         }
+         crcTableComputed = true;
+       }
+
+       uint32_t updateCrc(uint32_t crc, unsigned char *buf,
+                                unsigned int len)
+       {
+         uint32_t currentCRC = crc;
+
+         if (!crcTableComputed) {
+           makeCrcTable();
+         }
+
+         for (unsigned int i = 0; i < len; i++) {
+           currentCRC = crcTable[(currentCRC ^ buf[i]) & 0xff] ^ (currentCRC >> 8);
+         }
+         return currentCRC;
+       }
+    public:
+       uint32_t crc(unsigned char *buf, int len)
+       {
+         return updateCrc(0xffffffffL, buf, len) ^ 0xffffffffL;
+       }
 };
 
 #endif // PRIVATECHUNK_H

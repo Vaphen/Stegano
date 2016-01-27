@@ -1,6 +1,6 @@
 #include "test.h"
 
-//IMPLEMENT_APP(MyApp);
+IMPLEMENT_APP(MyApp);
 
 bool MyApp::OnInit() {
     GUI *frame = new GUI();
@@ -139,7 +139,7 @@ void unhideFile() {
     outputFileStream.close();
 }
 
-int main(int argc,char **argv)
+/*int main(int argc,char **argv)
 {
  //   MyApp myApp;
     Magick::InitializeMagick(*argv);
@@ -171,5 +171,5 @@ int main(int argc,char **argv)
     }
 
     return 0;
-}
+}*/
 

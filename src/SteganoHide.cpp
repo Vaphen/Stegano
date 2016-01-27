@@ -1,15 +1,19 @@
 #include "SteganoHide.h"
 
-SteganoHide::SteganoHide() : fileSize(0), doneBytes(0) { }
+SteganoHide::SteganoHide() : fileSize(0), doneBytes(0), outputFilePath("") { }
 
 SteganoHide::~SteganoHide() { }
 
 /** \brief Save the created image to disk.
  */
 void SteganoHide::saveChangesToDisk() {
-    this->steganoImage.write("/tmp/stegano.png");
+    if(outputFilePath.empty()) {
+        throw outputFileNotSpecified;
+    }
+    unsigned int randNo = getRandomNumber(0, 99999999);
+    this->steganoImage.write("/tmp/" + std::to_string(randNo));
     Chunk hideChunk("vaPh");
-    PrivateChunk privChunk("/tmp/stegano.png", "stegano.png");
+    PrivateChunk privChunk("/tmp/" + std::to_string(randNo), outputFilePath);
     privChunk.addChunk(hideChunk, this->usedPixels.c_str(), this->usedPixels.size());
     privChunk.finish();
 }
@@ -70,7 +74,6 @@ void SteganoHide::hideFile(std::ifstream &toHideFileStream, const std::string &p
     }
 
     normalizeImage();
-
     unsigned int loopCount = 0;
     while(toHideFileStream.good()) {
         Pixel hidingPixel = calculateHidingPosition(loopCount);
@@ -301,4 +304,12 @@ void SteganoHide::normalizeImage() {
             this->steganoImage.pixelColor(xValue, yValue, Magick::ColorRGB(getRGBString(curPixelRoundedRGB)));
         }
     }
+}
+
+
+/** \brief Set the path to the file that should contain the steganography-picture.
+ * \param outputFilePath const std::string& a path to a file; the file must not exist
+ */
+void SteganoHide::setOutputFilePath(const std::string &outputFilePath) {
+    this->outputFilePath = outputFilePath;
 }

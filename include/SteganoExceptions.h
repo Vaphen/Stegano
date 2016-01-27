@@ -3,6 +3,8 @@
 
 #include <exception>
 
+
+// TODO: change this to real exceptions
 struct SteganoException {
 private:
     std::string msg;
@@ -28,5 +30,6 @@ static const SteganoException imgNotLoaded(0x00000003, "No container image loade
 static const SteganoException fileStreamClosed(0x00000004, "The specified filestream for hideFile() is not open.");
 static const SteganoException hideNumber2Big(0x00000005, "The input number was not valid. Check the documentation for hideNumberInMagickColorRGB().");
 static const SteganoException byteUnitsError(0x00000011, "The struct ByteUnits was created with invalid units (max. 5 units, 5 tens, 2 hundreds).");
+static const SteganoException outputFileNotSpecified(0x00000012, "You perform some action on the outputfile without specifieng it. Call 'setOutputFilePath()' first.");
 
 #endif // PICTUREEDIT_H

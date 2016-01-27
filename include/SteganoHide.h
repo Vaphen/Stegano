@@ -17,6 +17,7 @@ class SteganoHide : public Stegano
         virtual ~SteganoHide();
 
 
+        void setOutputFilePath(const std::string &);
         void hidePhrase(const std::string &, const std::string &);
         void hideFile(std::ifstream &, const std::string &);
         void saveChangesToDisk();
@@ -35,6 +36,7 @@ class SteganoHide : public Stegano
 
         unsigned int fileSize;
         unsigned int doneBytes;
+        std::string outputFilePath;
 };
 
 #endif // STEGANOHIDE_H
