@@ -6,8 +6,14 @@ SteganoUnhide::~SteganoUnhide() { }
 
 // TODO: shorten this method and outsource some inner methods and add header comment
 std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
+    if(!this->steganoImage.isValid()) {
+        throw unhideFilesNotSpecified;
+    }
+
+    this->exposeFinished = false;
     Chunk hiddenChunk("vaPh");
-    PrivateChunk privChunk("./stegano.png", "./omg.png");
+    std::cout << this->steganoImage.baseFilename() << std::endl;
+    PrivateChunk privChunk(this->steganoImage.baseFilename(), "./omg.png");
     char *chunkData = new char[privChunk.getChunkSize(hiddenChunk)];
     privChunk.readChunk(hiddenChunk, chunkData);
     commentReaderStream.str(chunkData);
@@ -25,7 +31,6 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
 
         if(runCounter == shiftIndex) {
             pushPixelBy(curPixel, shiftAmount);
-          //  std::cout << runCounter << ":" << shiftAmount << std::endl;
             calculateNextShift();
         }
        // std::cout << curPixel.x << "::" << curPixel.y << std::endl;
@@ -59,6 +64,7 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
         }
         returnPhrase << decryptedChar;
     }
+    this->exposeFinished = true;
     return returnPhrase;
 }
 
@@ -86,4 +92,13 @@ void SteganoUnhide::calculateNextShift() {
         shiftAmount = std::stoi(curEntry.substr(posOfColon + 1, curEntry.size()));
     }
    // std::cout << shiftIndex << ":" << shiftAmount << std::endl;
+}
+
+unsigned char SteganoUnhide::getDoneStateInPercent() {
+    return (exposeFinished ? 100 : 0);
+}
+
+SteganoUnhide &SteganoUnhide::getInstance() {
+    static SteganoUnhide instance;
+    return instance;
 }

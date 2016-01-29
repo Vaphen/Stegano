@@ -13,11 +13,16 @@
 class SteganoUnhide : public Stegano
 {
     public:
-        SteganoUnhide();
         virtual ~SteganoUnhide();
 
         std::stringstream unhidePhrase(const std::string &);
+        unsigned char getDoneStateInPercent();
+
+        SteganoUnhide(SteganoUnhide const&) = delete;
+        void operator=(SteganoUnhide const&) = delete;
+        static SteganoUnhide &getInstance();
     protected:
+        SteganoUnhide();
     private:
         bool isPixelEmpty(const Pixel &);
         void calculateNextShift();
@@ -25,6 +30,8 @@ class SteganoUnhide : public Stegano
         unsigned int shiftIndex;
         unsigned int shiftAmount;
         std::stringstream commentReaderStream;
+
+        bool exposeFinished;
 };
 
 #endif // STEGANOUNHIDE_H

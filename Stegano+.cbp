@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Stegano+" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Stegano+" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-pg" />
+					<Add option="-g" />
+					<Add directory="/home/john/projects/Stegano+/include/" />
+					<Add directory="include/GUI/" />
+					<Add directory="include/GUI/customWidgets" />
+					<Add directory="include/GUI" />
+				</Compiler>
+				<Linker>
+					<Add option="-pg" />
+					<Add option="-lpthread" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Stegano+" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add directory="include/GUI/" />
+					<Add directory="include/GUI/customWidgets" />
+					<Add directory="include/GUI" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="include/ChunkExceptions.h" />
+		<Unit filename="include/GUI/ExposePage.h" />
+		<Unit filename="include/GUI/GUI.h" />
+		<Unit filename="include/GUI/HidePage.h" />
+		<Unit filename="include/GUI/MainPanel.h" />
+		<Unit filename="include/GUI/customWidgets/ImagePanel.h" />
+		<Unit filename="include/PrivateChunk.h" />
+		<Unit filename="include/Stegano.h" />
+		<Unit filename="include/SteganoExceptions.h" />
+		<Unit filename="include/SteganoHide.h" />
+		<Unit filename="include/SteganoStructs.h" />
+		<Unit filename="include/SteganoUnhide.h" />
+		<Unit filename="include/Strings.h" />
+		<Unit filename="src/GUI/ExposePage.cpp" />
+		<Unit filename="src/GUI/GUI.cpp" />
+		<Unit filename="src/GUI/HidePage.cpp" />
+		<Unit filename="src/GUI/MainPanel.cpp" />
+		<Unit filename="src/GUI/customWidgets/ImagePanel.cpp" />
+		<Unit filename="src/PrivateChunk.cpp" />
+		<Unit filename="src/Stegano.cpp" />
+		<Unit filename="src/SteganoHide.cpp" />
+		<Unit filename="src/SteganoUnhide.cpp" />
+		<Unit filename="test.cpp" />
+		<Unit filename="test.h" />
+		<Unit filename="wxsmith/GUI.wxs" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,6 +1,6 @@
 #include "SteganoHide.h"
 
-SteganoHide::SteganoHide() : fileSize(0), doneBytes(0), outputFilePath("") { }
+SteganoHide::SteganoHide() : hundredPercentValue(0), doneBytes(0), outputFilePath("") { }
 
 SteganoHide::~SteganoHide() { }
 
@@ -26,6 +26,7 @@ void SteganoHide::saveChangesToDisk() {
  * \throw SteganoException img2small if the loaded image is too small to hide the given phrase
  */
 void SteganoHide::hidePhrase(const std::string &phraseToHide, const std::string &password) {
+    this->origImageBackup = this->steganoImage;
     if(!this->steganoImage.isValid()) {
         throw imgNotLoaded;
     }
@@ -41,16 +42,17 @@ void SteganoHide::hidePhrase(const std::string &phraseToHide, const std::string 
         Pixel hidingPixel = calculateHidingPosition(i);
      //   std::cout << hidingPixel.x << ":" << hidingPixel.y << std::endl;
 
-        hideLetterAtPixel(phraseToHide.at(i), hidingPixel);
+        hideByteAtPixel(phraseToHide.at(i), hidingPixel);
     }
     Pixel hidingPixel = calculateHidingPosition(phraseToHide.size());
 
      drawFinishPixel(hidingPixel);
+     resetNormalizedImage();
 }
 
 
 /** \brief Hide a file (or some other ifstream) in the loaded picture
- * It loads the streamsize to this->fileSize and the amount of finished bytes to this->doneBytes
+ * It loads the streamsize to this->hundredPercentValue and the amount of finished bytes to this->doneBytes
  * \param &toHideFileStream std::ifstream the filestream whose contents should be hidden in the picture (should be opened binary)
  * \param &password const std::string the password (not used yet)
  * \throw SteganoException imgNotLoaded if no container file is loaded.
@@ -58,14 +60,18 @@ void SteganoHide::hidePhrase(const std::string &phraseToHide, const std::string 
  * \throw SteganoException fileStreamClosed if the specified fileStream is not opened
  */
 void SteganoHide::hideFile(std::ifstream &toHideFileStream, const std::string &password) {
-    this->fileSize = getFileStreamSizeInBytes(toHideFileStream);
+    this->origImageBackup = this->steganoImage;
+    this->doneBytes = 0;
+    // 2 * |imagePixel| because we normalize all pixels first and afterwards we reset it.
+    this->hundredPercentValue = getFileStreamSizeInBytes(toHideFileStream) + 2 * (this->xResolution * this->yResolution);
 
     if(!this->steganoImage.isValid()) {
         throw imgNotLoaded;
     }
 
     // we need to divide it by 2 because in worst case every byte takes 2 pixel
-    if(this->fileSize > (this->xResolution * this->yResolution) / 2) {
+    // TODO: reimplement a check like this one
+    if(getFileStreamSizeInBytes(toHideFileStream) > (this->xResolution * this->yResolution) / 2) {
         throw img2small;
     }
 
@@ -78,7 +84,7 @@ void SteganoHide::hideFile(std::ifstream &toHideFileStream, const std::string &p
     while(toHideFileStream.good()) {
         Pixel hidingPixel = calculateHidingPosition(loopCount);
 
-        hideLetterAtPixel(toHideFileStream.get(), hidingPixel);
+        hideByteAtPixel(toHideFileStream.get(), hidingPixel);
 
         loopCount++;
         this->doneBytes++;
@@ -86,6 +92,7 @@ void SteganoHide::hideFile(std::ifstream &toHideFileStream, const std::string &p
     }
 
     drawFinishPixel(calculateHidingPosition(loopCount));
+    resetNormalizedImage();
 }
 
 /** \brief Calculate a free position where the nth byte should be hidden.
@@ -133,36 +140,38 @@ bool SteganoHide::isPixelEmpty(const Pixel &pixel) {
     return (redLeastSignificantBit == 5 && greenLeastSignificantBit == 5 && blueLeastSignificantBit == 5);
 }
 
-/** \brief Hide a letter at the specified pixelposition.
- * The letter is hidden as ASCII-value in the least-significant bits of the RGB-Value of the specified pixel.
+/** \brief Hide a byte at the specified pixelposition.
+ * The byte is hidden as ASCII-value in the least-significant bits of the RGB-Value of the specified pixel.
  *
- * \param &letterToHide const unsignedchar the letter that should be hidden
- * \param &pixel Pixel a pixel-struct containing x- and y-position of the pixel where the letter should be hidden.
+ * \param &byteToHide const unsignedchar the byte that should be hidden
+ * \param &pixel Pixel a pixel-struct containing x- and y-position of the pixel where the byte should be hidden.
  * The coordinates of the pixel may change in some special cases. The pixel must be empty or it is overwritten.
  */
-void SteganoHide::hideLetterAtPixel(const unsigned char &letterToHide, Pixel &pixel) {
+void SteganoHide::hideByteAtPixel(const unsigned char &byteToHide, Pixel &pixel) {
 
     Magick::ColorRGB newPixelColor = this->steganoImage.pixelColor(pixel.x, pixel.y);
-    if(hideNumberInMagickColorRGB(letterToHide, newPixelColor)) {
+    if(hideNumberInMagickColorRGB(byteToHide, newPixelColor)) {
             // in this case we need just one pixel to save one byte
          this->steganoImage.pixelColor(pixel.x, pixel.y, newPixelColor);
-    } else {
-        // in this case we need two pixels to save one byte
-        hideNumberInMagickColorRGB(calculateOverflowNumber(letterToHide), newPixelColor);
-        this->steganoImage.pixelColor(pixel.x, pixel.y, newPixelColor);
-
-        incrementPixel(pixel);
-
-        Magick::ColorRGB overflowFirstPixelColor = this->steganoImage.pixelColor(pixel.x, pixel.y);
-
-        hideNumberInMagickColorRGB(calculateNumberAfterOverflow(letterToHide), overflowFirstPixelColor);
-        this->steganoImage.pixelColor(pixel.x, pixel.y, overflowFirstPixelColor);
+         return;
     }
+
+    // in this case we need two pixels to save one byte
+    hideNumberInMagickColorRGB(calculateOverflowNumber(byteToHide), newPixelColor);
+    this->steganoImage.pixelColor(pixel.x, pixel.y, newPixelColor);
+
+    incrementPixel(pixel);
+
+    Magick::ColorRGB overflowFirstPixelColor = this->steganoImage.pixelColor(pixel.x, pixel.y);
+
+    hideNumberInMagickColorRGB(calculateNumberAfterOverflow(byteToHide), overflowFirstPixelColor);
+    this->steganoImage.pixelColor(pixel.x, pixel.y, overflowFirstPixelColor);
+
 }
 
-/** \brief This method calculates the overflow-number for a given letter. (First part of two pixels. The second pixel is calculated by calculateNumberAfterOverflow())
+/** \brief This method calculates the overflow-number for a given byte. (First part of two pixels. The second pixel is calculated by calculateNumberAfterOverflow())
  * The overflow number always looks like: 4XY: X equals the tens-bit in byteToHide if < 5, else 5, Y same with units bit.
- * \param &byteToHide const unsignedchar the letter to hide
+ * \param &byteToHide const unsignedchar the byte to hide
  * \return unsigned short a number formatted like 4XY, X and Y <= 5.
  */
 unsigned short SteganoHide::calculateOverflowNumber(const unsigned char &byteToHide) {
@@ -278,8 +287,8 @@ void SteganoHide::drawFinishPixel(const Pixel &pixel) {
  */
 unsigned char SteganoHide::getDoneStateInPercent() {
     //std::cout << this->fileSize << std::endl;
-    if(fileSize == 0) return 0;
-    unsigned int onePercent = this->fileSize / 100;
+    if(hundredPercentValue == 0) return 0;
+    unsigned int onePercent = this->hundredPercentValue / 100;
 
     return this->doneBytes / onePercent;
 }
@@ -303,6 +312,7 @@ void SteganoHide::normalizeImage() {
                                    curPixelRGB.blue - (curPixelRGB.blue % 10) + 5);
             this->steganoImage.pixelColor(xValue, yValue, Magick::ColorRGB(getRGBString(curPixelRoundedRGB)));
         }
+        this->doneBytes += this->yResolution;
     }
 }
 
@@ -312,4 +322,26 @@ void SteganoHide::normalizeImage() {
  */
 void SteganoHide::setOutputFilePath(const std::string &outputFilePath) {
     this->outputFilePath = outputFilePath;
+}
+
+/** \brief Restore unused pixel to their original value by using the saved origImageBackup.
+ */
+void SteganoHide::resetNormalizedImage() {
+    for(unsigned int x = 0; x < this->xResolution; x++) {
+        for(unsigned int y = 0; y < this->yResolution; y++) {
+            if(isPixelEmpty(Pixel(x, y))) {
+                this->steganoImage.pixelColor(x, y, this->origImageBackup.pixelColor(x, y));
+            }
+        }
+        this->doneBytes += this->yResolution;
+    }
+}
+
+/** \brief Return the only instance of this class (Singleton-pattern).
+ *
+ * \return SteganoHide& the instance of this class
+ */
+SteganoHide &SteganoHide::getInstance() {
+    static SteganoHide instance;
+    return instance;
 }

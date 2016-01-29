@@ -32,9 +32,8 @@ void getUserMenuOption(std::string &userInput) {
 }
 
 void hide() {
-    SteganoHide myHide;
     try {
-        myHide.loadPicture(HIDE_FILE);
+         SteganoHide::getInstance().loadPicture(HIDE_FILE);
     } catch (SteganoException &stegoException) {
         std::cerr << stegoException.what() << std::endl;
         exit(0);
@@ -45,19 +44,18 @@ void hide() {
     getUserInputPassword(password);
 
     try {
-        myHide.hidePhrase(phraseToHide, password);
+         SteganoHide::getInstance().hidePhrase(phraseToHide, password);
     } catch (SteganoException &stegoException) {
         std::cerr << stegoException.what() << std::endl;
         exit(0);
     }
-    myHide.saveChangesToDisk();
+     SteganoHide::getInstance().saveChangesToDisk();
     std::cout << "Text successful hidden" << std::endl;
 }
 
 void unhide() {
-    SteganoUnhide stegUnhide;
     try {
-        stegUnhide.loadPicture(STEGANO_FILE);
+        SteganoUnhide::getInstance().loadPicture(STEGANO_FILE);
     } catch (SteganoException &stegoException) {
         std::cerr << stegoException.what() << std::endl;
         exit(0);
@@ -65,7 +63,7 @@ void unhide() {
 
     std::string password;
     getUserInputPassword(password);
-    std::cout << "The hidden text is:\n--------------------\n" << stegUnhide.unhidePhrase(password).str() << "\n-------------------------" << std::endl;
+    std::cout << "The hidden text is:\n--------------------\n" << SteganoUnhide::getInstance().unhidePhrase(password).str() << "\n-------------------------" << std::endl;
 }
 
 void hideFile() {
@@ -79,9 +77,8 @@ void hideFile() {
 
     std::ifstream inputFileStream(fileToHide, std::ifstream::in | std::ifstream::binary);
 
-    SteganoHide myHide;
     try {
-        myHide.loadPicture(containerFile);
+         SteganoHide::getInstance().loadPicture(containerFile);
     } catch (SteganoException &loadError) {
         std::cerr << loadError.what() << std::endl;
         exit(0);
@@ -89,23 +86,23 @@ void hideFile() {
 
     try {
         std::thread showPercentThread([&]() {
-            unsigned char doneStateInPercent = myHide.getDoneStateInPercent();
+            unsigned char doneStateInPercent =  SteganoHide::getInstance().getDoneStateInPercent();
             while(doneStateInPercent < 100) {
                 // need to flush that the cursor is always at the end of the line.
                 std::cout.flush();
                 std::cout << "\r" << (int)doneStateInPercent << " / 100%";
-                doneStateInPercent = myHide.getDoneStateInPercent();
+                doneStateInPercent =  SteganoHide::getInstance().getDoneStateInPercent();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
         });
         showPercentThread.detach();
-        myHide.hideFile(inputFileStream, "empty");
+         SteganoHide::getInstance().hideFile(inputFileStream, "empty");
     } catch (SteganoException &stegoException) {
         std::cerr << stegoException.what() << std::endl;
         exit(0);
     }
 
-    myHide.saveChangesToDisk();
+    SteganoHide::getInstance().saveChangesToDisk();
     inputFileStream.close();
     std::cout << "\nHiding successful!" << std::endl;
 }
@@ -120,9 +117,8 @@ void unhideFile() {
     std::getline(std::cin, outputFile);
 
 
-    SteganoUnhide unHide;
     try {
-        unHide.loadPicture(containerFile);
+        SteganoUnhide::getInstance().loadPicture(containerFile);
     } catch (SteganoException &loadError) {
         std::cerr << loadError.what() << std::endl;
         exit(0);
@@ -131,7 +127,7 @@ void unhideFile() {
 
     std::ofstream outputFileStream(outputFile, std::ofstream::out | std::ofstream::binary);
     try {
-        outputFileStream << unHide.unhidePhrase("empty").rdbuf();
+        outputFileStream << SteganoUnhide::getInstance().unhidePhrase("empty").rdbuf();
     } catch (SteganoException &stegoException) {
         std::cerr << stegoException.what() << std::endl;
         exit(0);

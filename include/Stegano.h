@@ -13,11 +13,11 @@
 class Stegano
 {
     public:
-        Stegano();
         virtual ~Stegano();
 
         void loadPicture(const std::string &);
     protected:
+        Stegano();
         // TODO: make steganoImage private and create Getter
         Magick::Image steganoImage;
 
@@ -31,6 +31,7 @@ class Stegano
         virtual bool isPixelEmpty(const Pixel &) = 0;
         inline int mod(const int &x, const int &m);
         unsigned int getFileStreamSizeInBytes(std::ifstream &);
+        virtual unsigned char getDoneStateInPercent() = 0;
 
         double xResolution;
         double yResolution;

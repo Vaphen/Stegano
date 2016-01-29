@@ -31,5 +31,6 @@ static const SteganoException fileStreamClosed(0x00000004, "The specified filest
 static const SteganoException hideNumber2Big(0x00000005, "The input number was not valid. Check the documentation for hideNumberInMagickColorRGB().");
 static const SteganoException byteUnitsError(0x00000011, "The struct ByteUnits was created with invalid units (max. 5 units, 5 tens, 2 hundreds).");
 static const SteganoException outputFileNotSpecified(0x00000012, "You perform some action on the outputfile without specifieng it. Call 'setOutputFilePath()' first.");
+static const SteganoException unhideFilesNotSpecified(0x00000013, "You tried to perform the unhide action with unset container-/outputfilepath.");
 
 #endif // PICTUREEDIT_H

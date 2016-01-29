@@ -10,21 +10,27 @@
 #include "Stegano.h"
 #include "PrivateChunk.h"
 
+
+/** \brief SteganoHide can be used to hide data in images. It's designed using the singleton-patter.
+ * (Get instance via SteganoHide::getInstance())
+ */
 class SteganoHide : public Stegano
 {
     public:
-        SteganoHide();
         virtual ~SteganoHide();
-
+        SteganoHide(SteganoHide const&) = delete;
+        void operator=(SteganoHide const&) = delete;
 
         void setOutputFilePath(const std::string &);
         void hidePhrase(const std::string &, const std::string &);
         void hideFile(std::ifstream &, const std::string &);
         void saveChangesToDisk();
         unsigned char getDoneStateInPercent();
+        static SteganoHide &getInstance();
     protected:
+        SteganoHide();
     private:
-        void hideLetterAtPixel(const unsigned char &, Pixel &);
+        void hideByteAtPixel(const unsigned char &, Pixel &);
         bool hideNumberInMagickColorRGB(const unsigned short &, Magick::ColorRGB &);
         void drawFinishPixel(const Pixel &);
         Pixel calculateHidingPosition(const unsigned int &);
@@ -32,11 +38,13 @@ class SteganoHide : public Stegano
         unsigned short calculateNumberAfterOverflow(const unsigned char &);
         bool isPixelEmpty(const Pixel &);
         void normalizeImage();
+        void resetNormalizedImage();
 
-
-        unsigned int fileSize;
-        unsigned int doneBytes;
+        uint64_t hundredPercentValue;
+        uint64_t doneBytes;
         std::string outputFilePath;
+
+        Magick::Image origImageBackup;
 };
 
 #endif // STEGANOHIDE_H
