@@ -1,13 +1,15 @@
-#include "SteganoUnhide.h"
+#include "SteganoExpose.h"
 
-SteganoUnhide::SteganoUnhide() { }
+SteganoExpose::SteganoExpose() { }
 
-SteganoUnhide::~SteganoUnhide() { }
+SteganoExpose::~SteganoExpose() { }
 
 // TODO: shorten this method and outsource some inner methods and add header comment
-std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
-    if(!this->steganoImage.isValid()) {
-        throw unhideFilesNotSpecified;
+std::stringstream SteganoExpose::unhidePhrase(const std::string &password)
+{
+    if(!this->steganoImage.isValid())
+    {
+        throw SteganoException::UnhideFileNotSpecified();
     }
 
     this->exposeFinished = false;
@@ -21,19 +23,21 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
 
     Pixel curPixel(0, 0);
     std::stringstream returnPhrase;
-    for(unsigned int runCounter = 0; ;runCounter++) {
+    for(unsigned int runCounter = 0; ; runCounter++)
+    {
         curPixel.x = 0;
         curPixel.y = 0;
         int_least64_t steps = quadraticSondation(runCounter, this->xResolution * this->yResolution);
-     //   std::cout << "Push by" << steps << std::endl;
+        //   std::cout << "Push by" << steps << std::endl;
         pushPixelBy(curPixel, steps);
-      //  std::cout << curPixel.x << ":" << curPixel.y << std::endl;
+        //  std::cout << curPixel.x << ":" << curPixel.y << std::endl;
 
-        if(runCounter == shiftIndex) {
+        if(runCounter == shiftIndex)
+        {
             pushPixelBy(curPixel, shiftAmount);
             calculateNextShift();
         }
-       // std::cout << curPixel.x << "::" << curPixel.y << std::endl;
+        // std::cout << curPixel.x << "::" << curPixel.y << std::endl;
         Magick::ColorRGB curPixelColor = this->steganoImage.pixelColor(curPixel.x, curPixel.y);
 
         unsigned char redLeastSignificantBit = convert16BitTo8BitRGB(curPixelColor.redQuantum()) % 10;
@@ -42,7 +46,8 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
 
         // there was an overflow at the pixel color. we need to handle it special.
         unsigned char decryptedChar = 0;
-        if(redLeastSignificantBit == 4) {
+        if(redLeastSignificantBit == 4)
+        {
             decryptedChar += greenLeastSignificantBit * 10;
             decryptedChar += blueLeastSignificantBit;
             incrementPixel(curPixel);
@@ -54,12 +59,15 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
             decryptedChar += redLeastSignificantBit * 100;
             decryptedChar += greenLeastSignificantBit * 10;
             decryptedChar += blueLeastSignificantBit;
-        } else {
+        }
+        else
+        {
             decryptedChar = redLeastSignificantBit * 100;
             decryptedChar += greenLeastSignificantBit * 10;
             decryptedChar += blueLeastSignificantBit;
         }
-        if(isFinishPixel(curPixel)) {
+        if(isFinishPixel(curPixel))
+        {
             break;
         }
         returnPhrase << decryptedChar;
@@ -72,9 +80,10 @@ std::stringstream SteganoUnhide::unhidePhrase(const std::string &password) {
  * \param pixel const Pixel& the pixel that should be checked
  * \return bool true if pixel is not used until now, else false
  */
-bool SteganoUnhide::isPixelEmpty(const Pixel &pixel) {
+bool SteganoExpose::isPixelEmpty(const Pixel &pixel)
+{
     // not used until now
-   return true;
+    return true;
 }
 
 
@@ -82,23 +91,27 @@ bool SteganoUnhide::isPixelEmpty(const Pixel &pixel) {
  * The variables shiftIndex and shiftAmount are set by a line of commentReaderStream.
  * The input should be formatted as loopIteration:skipAmount\nloopIteration:skipAmount\n....
  */
-void SteganoUnhide::calculateNextShift() {
+void SteganoExpose::calculateNextShift()
+{
     std::string curEntry;
     std::getline(commentReaderStream, curEntry, '\n');
     size_t posOfColon = curEntry.find(':');
 
-    if(posOfColon != std::string::npos) {
+    if(posOfColon != std::string::npos)
+    {
         shiftIndex = std::stoi(curEntry.substr(0, posOfColon));
         shiftAmount = std::stoi(curEntry.substr(posOfColon + 1, curEntry.size()));
     }
-   // std::cout << shiftIndex << ":" << shiftAmount << std::endl;
+    // std::cout << shiftIndex << ":" << shiftAmount << std::endl;
 }
 
-unsigned char SteganoUnhide::getDoneStateInPercent() {
+unsigned char SteganoExpose::getDoneStateInPercent()
+{
     return (exposeFinished ? 100 : 0);
 }
 
-SteganoUnhide &SteganoUnhide::getInstance() {
-    static SteganoUnhide instance;
+SteganoExpose &SteganoExpose::getInstance()
+{
+    static SteganoExpose instance;
     return instance;
 }

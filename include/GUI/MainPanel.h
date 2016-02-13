@@ -9,11 +9,11 @@
 
 class MainPanel : public wxNotebook
 {
-    public:
-        MainPanel(wxWindow *);
-        virtual ~MainPanel();
-    protected:
-    private:
+public:
+    MainPanel(wxWindow *);
+    virtual ~MainPanel();
+protected:
+private:
 };
 
 #endif // MAINPANEL_H

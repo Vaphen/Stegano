@@ -22,23 +22,23 @@
 
 class GUI: public wxFrame
 {
-	public:
+public:
 
-		GUI();
-		virtual ~GUI();
+    GUI();
+    virtual ~GUI();
 
-	protected:
+protected:
 
-	private:
-        virtual void OnClose(wxCloseEvent&);
-        void createMenuBar();
-        void initializeWindow();
+private:
+    virtual void OnClose(wxCloseEvent&);
+    void createMenuBar();
+    void initializeWindow();
 
-        // events
-        void OnAbout(wxCommandEvent&);
-        void OnExit(wxCommandEvent&);
+    // events
+    void OnAbout(wxCommandEvent&);
+    void OnExit(wxCommandEvent&);
 
-        wxDECLARE_EVENT_TABLE();
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif

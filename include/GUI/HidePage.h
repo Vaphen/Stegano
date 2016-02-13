@@ -4,57 +4,62 @@
 #include <wx/wx.h>
 #include <wx/notebook.h>
 #include <wx/gbsizer.h>
+#include <wx/event.h>
 #include <thread>
+#include <cassert>
+#include <utility>
 
+#include "ActionNotebookPage.h"
 #include "SteganoHide.h"
+#include "Dialogs.h"
 
-
-#define ID_OpenFile 1
-#define ID_SelectOutputFile 2
-#define ID_SelectContainerFile 3
-#define ID_SelectHideFile 4
-#define ID_HideFileRadio 5
-#define ID_HideTextRadio 6
-#define ID_Start 7
-
-class HidePage : public wxNotebookPage
+class HidePage : public ActionNotebookPage
 {
-    public:
-        HidePage() = delete;
-        HidePage(wxWindow *, int);
-        virtual ~HidePage();
-    protected:
-    private:
-        // widgets
-        wxGridBagSizer *form;
-        wxBitmap *openDialogButtonIcon;
+public:
+    HidePage() = delete;
+    HidePage(wxWindow *, int);
+    virtual ~HidePage();
+protected:
+private:
+    // widgets
+    wxGridBagSizer *form;
+    wxBitmap *openDialogButtonIcon;
 
-        wxTextCtrl *outputFileInput;
-        wxTextCtrl *containerFileInput;
-        wxTextCtrl *hideFileInput;
-        wxBitmapButton *openContainerDialogButton;
-        wxBitmapButton *openHideFileDialogButton;
-        wxTextCtrl *textToHideCtrl;
-        wxButton *startHidingButton;
-        wxGauge *progressBar;
+    wxTextCtrl *outputFileInput;
+    wxTextCtrl *containerFileInput;
+    wxRadioButton *hideFileRadio;
+    wxTextCtrl *hideFileInput;
+    wxBitmapButton *openContainerDialogButton;
+    wxBitmapButton *openHideFileDialogButton;
+    wxRadioButton *hideTextRadio;
+    wxTextCtrl *textToHideCtrl;
+    wxButton *startHidingButton;
+    wxGauge *progressBar;
 
-        // events
-        void OnSelectOutputFileClicked(wxCommandEvent &event);
-        void OnOpenFileClicked(wxCommandEvent& event);
-        void HideRadioChanged(wxCommandEvent& event);
-        void OnStart(wxCommandEvent &event);
 
-        // initialization functions
-        void addOutputFileArea();
-        void addContainerFileArea();
-        void addFileToHideArea();
-        void addPhraseToHideArea();
+    // events
+    void OnSelectOutputFileClicked(wxCommandEvent &event);
+    void OnOpenHideFileClicked(wxCommandEvent& event);
+    void OnOpenContainerFileClicked(wxCommandEvent& event);
+    void HideRadioChanged(wxCommandEvent& event);
+    void OnStart(wxCommandEvent &event);
 
-        // additional functions
-        void ShowErrorDialog(const wxString &, const wxString &);
+    // initialization functions
+    void addOutputFileArea();
+    void addContainerFileArea();
+    void addFileToHideArea();
+    void addPhraseToHideArea();
 
-        // declare event table
-        wxDECLARE_EVENT_TABLE();
+    //void sendThreadMsg(const MessageData &);
+    void disableInputElements();
+    void reenableElements();
+    void startProgressbarThread();
+
+    void hideFileSelected(const std::string &);
+    void hideTextSelected(const std::string &);
+
+    // declare event table
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif // HIDEPAGE_H

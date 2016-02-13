@@ -1,23 +1,17 @@
 #include "ExposePage.h"
 
-#define ID_START 1
-#define ID_INPUT_CTRL 2
-#define ID_OUTPUT_CTRL 3
-#define ID_OPEN_INPUT_DIALOG 4
-#define ID_OPEN_OUTPUT_DIALOG 5
-
-BEGIN_EVENT_TABLE(ExposePage, wxNotebookPage)
-    EVT_BUTTON(ID_OPEN_INPUT_DIALOG, ExposePage::OnOpenInputDialogClicked)
-    EVT_BUTTON(ID_OPEN_OUTPUT_DIALOG, ExposePage::OnOpenOutputDialogClicked)
-    EVT_BUTTON(ID_START, ExposePage::OnStartClicked)
+BEGIN_EVENT_TABLE(ExposePage, ActionNotebookPage)
+    EVT_BUTTON(ID_OpenInputDialog, ExposePage::OnOpenInputDialogClicked)
+    EVT_BUTTON(ID_OpenOutputDialog, ExposePage::OnOpenOutputDialogClicked)
+    EVT_BUTTON(ID_Start, ExposePage::OnStartClicked)
 END_EVENT_TABLE()
 
 ExposePage::ExposePage(wxWindow *parent, int id) :
-    wxNotebookPage(parent, id),
+    ActionNotebookPage(parent, id),
     mainSizer(new wxBoxSizer(wxVERTICAL)),
-    inputFileCtrl(new wxTextCtrl(this, ID_INPUT_CTRL, _T(""), wxDefaultPosition, wxSize(240, -1))),
-    outputFileCtrl(new wxTextCtrl(this, ID_OUTPUT_CTRL, _T(""), wxDefaultPosition, wxSize(240, -1))),
-    startBtn(new wxButton(this, ID_START, "Extrahiere Daten")),
+    inputFileCtrl(new wxTextCtrl(this, ID_InputCtrl, _T(""), wxDefaultPosition, wxSize(240, -1))),
+    outputFileCtrl(new wxTextCtrl(this, ID_OutputCtrl, _T(""), wxDefaultPosition, wxSize(240, -1))),
+    startBtn(new wxButton(this, ID_Start, "Extrahiere Daten")),
     progressBar(new wxGauge(this, wxID_ANY, 100))
 {
     inputFileCtrl->Enable(false);
@@ -28,10 +22,10 @@ ExposePage::ExposePage(wxWindow *parent, int id) :
     wxBitmap *openDialogButtonIcon = new wxBitmap("./res/folder.png", wxBITMAP_TYPE_PNG);
 
     wxStaticText *inputFileLabel = new wxStaticText(this, wxID_ANY, "Kontainer-Datei:");
-    wxBitmapButton *openInputFileButton = new wxBitmapButton(this, ID_OPEN_INPUT_DIALOG, *openDialogButtonIcon);
+    wxBitmapButton *openInputFileButton = new wxBitmapButton(this, ID_OpenInputDialog, *openDialogButtonIcon);
 
     wxStaticText *outputFileLabel = new wxStaticText(this, wxID_ANY, "Ausgabe-Datei:");
-    wxBitmapButton *openOutputFileButton = new wxBitmapButton(this, ID_OPEN_OUTPUT_DIALOG, *openDialogButtonIcon);
+    wxBitmapButton *openOutputFileButton = new wxBitmapButton(this, ID_OpenOutputDialog, *openDialogButtonIcon);
 
     form->Add(inputFileLabel, wxGBPosition(0, 0));
     form->Add(inputFileCtrl, wxGBPosition(0, 1), wxGBSpan(1, 1), wxEXPAND);
@@ -53,7 +47,8 @@ ExposePage::~ExposePage()
     //dtor
 }
 
-void ExposePage::OnOpenInputDialogClicked(wxCommandEvent &event) {
+void ExposePage::OnOpenInputDialogClicked(wxCommandEvent &event)
+{
     wxFileDialog openFileDialog(this, _("Open XYZ file"), "", "", "PortableNetworkGraphics (*.png)|*.png", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
     // user cancelled his action
     if (openFileDialog.ShowModal() == wxID_CANCEL)
@@ -65,7 +60,8 @@ void ExposePage::OnOpenInputDialogClicked(wxCommandEvent &event) {
     inputFileCtrl->SetInsertionPointEnd();
 }
 
-void ExposePage::OnOpenOutputDialogClicked(wxCommandEvent &event) {
+void ExposePage::OnOpenOutputDialogClicked(wxCommandEvent &event)
+{
     wxFileDialog openFileDialog(this, _("Ausgabedatei wählen"), "", "", "Alle Dateien (*.*)|*.*", wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 
     // user cancelled his action
@@ -79,30 +75,64 @@ void ExposePage::OnOpenOutputDialogClicked(wxCommandEvent &event) {
 }
 
 
-void ExposePage::OnStartClicked(wxCommandEvent &event) {
+void ExposePage::OnStartClicked(wxCommandEvent &event)
+{
     progressBar->SetValue(0);
-    startBtn->Enable(false);
-    std::thread exposeThread([this]() {
-        SteganoUnhide::getInstance().loadPicture(inputFileCtrl->GetValue().ToStdString());
-        std::stringstream exposedDataStream = SteganoUnhide::getInstance().unhidePhrase("notusedpassword");
-        std::ofstream outputFileStream(outputFileCtrl->GetValue().ToStdString(), std::fstream::binary);
-        if(!outputFileStream.good()) {
-                // showErrorDialog();
-            return;
-        }
-        outputFileStream << exposedDataStream.rdbuf();
-        outputFileStream.close();
-    });
-    exposeThread.detach();
+    disableInputElements();
+    startExposeThread();
+    startProgressbarThread();
+}
 
-    std::thread progressBarThread([this]() {
-        while(progressBar->GetValue() < 100) {
-            progressBar->SetValue(SteganoUnhide::getInstance().getDoneStateInPercent());
+void ExposePage::disableInputElements()
+{
+    startBtn->Enable(false);
+    startBtn->SetLabel("Extrahiere...");
+}
+
+void ExposePage::reenableElements()
+{
+    startBtn->SetLabel("Start!");
+    startBtn->Enable(true);
+}
+
+void ExposePage::startProgressbarThread()
+{
+    std::thread progressBarThread([this]()
+    {
+        while(steganoRunning)
+        {
+            progressBar->SetValue(SteganoExpose::getInstance().getDoneStateInPercent());
         };
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        startBtn->Enable(true);
     });
     progressBarThread.detach();
+}
 
+void ExposePage::startExposeThread()
+{
+    steganoRunning = true;
+    std::thread exposeThread([this]()
+    {
+        try
+        {
+            SteganoExpose::getInstance().loadPicture(inputFileCtrl->GetValue().ToStdString());
+            std::stringstream exposedDataStream = SteganoExpose::getInstance().unhidePhrase("notusedpassword");
+            std::ofstream outputFileStream(outputFileCtrl->GetValue().ToStdString(), std::fstream::binary);
+            if(!outputFileStream.good())
+            {
+                throw SteganoException::OutputFileStreamNotGood();
+            }
+            outputFileStream << exposedDataStream.rdbuf();
+            outputFileStream.close();
+        }
+        catch(const std::exception &ex)
+        {
+            sendThreadMsg(MessageData(_T("Ein Fehler ist aufgetreten."), wxString(ex.what())));
+            steganoRunning = false;
+            return;
+        }
+        sendThreadMsg(MessageData(_T("Extraktion erfolgreich!"), _T("Die Daten wurden erfolgreich extrahiert.")));
+        steganoRunning = false;
+    });
+    exposeThread.detach();
 }
 

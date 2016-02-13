@@ -2,7 +2,8 @@
 
 IMPLEMENT_APP(MyApp);
 
-bool MyApp::OnInit() {
+bool MyApp::OnInit()
+{
     GUI *frame = new GUI();
     frame->Show( true );
     return true;
@@ -10,18 +11,21 @@ bool MyApp::OnInit() {
 
 using namespace std;
 
-void getUserInputPhrase(std::string &phraseToHide) {
+void getUserInputPhrase(std::string &phraseToHide)
+{
     cin.ignore (std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Phrase to hide:\n";
     std::getline(std::cin, phraseToHide);
 }
 
-void getUserInputPassword(std::string &password) {
+void getUserInputPassword(std::string &password)
+{
     std::cout << "Enter your password: ";
     std::cin >> password;
 }
 
-void getUserMenuOption(std::string &userInput) {
+void getUserMenuOption(std::string &userInput)
+{
     std::cout << "Choose what you want to do:\n";
     std::cout << "1) Hide text in Picture\n";
     std::cout << "2) Get text from Picture\n";
@@ -31,11 +35,15 @@ void getUserMenuOption(std::string &userInput) {
     std::cin >> userInput;
 }
 
-void hide() {
-    try {
-         SteganoHide::getInstance().loadPicture(HIDE_FILE);
-    } catch (SteganoException &stegoException) {
-        std::cerr << stegoException.what() << std::endl;
+void hide()
+{
+    try
+    {
+        SteganoHide::getInstance().loadPicture(HIDE_FILE);
+    }
+    catch (std::exception &ex)
+    {
+        std::cerr << ex.what() << std::endl;
         exit(0);
     }
 
@@ -43,30 +51,38 @@ void hide() {
     getUserInputPhrase(phraseToHide);
     getUserInputPassword(password);
 
-    try {
-         SteganoHide::getInstance().hidePhrase(phraseToHide, password);
-    } catch (SteganoException &stegoException) {
-        std::cerr << stegoException.what() << std::endl;
+    try
+    {
+        SteganoHide::getInstance().hidePhrase(phraseToHide, password);
+    }
+    catch (std::exception &ex)
+    {
+        std::cerr << ex.what() << std::endl;
         exit(0);
     }
-     SteganoHide::getInstance().saveChangesToDisk();
+    SteganoHide::getInstance().saveChangesToDisk();
     std::cout << "Text successful hidden" << std::endl;
 }
 
-void unhide() {
-    try {
-        SteganoUnhide::getInstance().loadPicture(STEGANO_FILE);
-    } catch (SteganoException &stegoException) {
-        std::cerr << stegoException.what() << std::endl;
+void unhide()
+{
+    try
+    {
+        SteganoExpose::getInstance().loadPicture(STEGANO_FILE);
+    }
+    catch (std::exception &ex)
+    {
+        std::cerr << ex.what() << std::endl;
         exit(0);
     }
 
     std::string password;
     getUserInputPassword(password);
-    std::cout << "The hidden text is:\n--------------------\n" << SteganoUnhide::getInstance().unhidePhrase(password).str() << "\n-------------------------" << std::endl;
+    std::cout << "The hidden text is:\n--------------------\n" << SteganoExpose::getInstance().unhidePhrase(password).str() << "\n-------------------------" << std::endl;
 }
 
-void hideFile() {
+void hideFile()
+{
     std::string fileToHide, containerFile;
     cin.ignore (std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Enter the file you want to hide: ";
@@ -77,17 +93,23 @@ void hideFile() {
 
     std::ifstream inputFileStream(fileToHide, std::ifstream::in | std::ifstream::binary);
 
-    try {
-         SteganoHide::getInstance().loadPicture(containerFile);
-    } catch (SteganoException &loadError) {
+    try
+    {
+        SteganoHide::getInstance().loadPicture(containerFile);
+    }
+    catch (std::exception &loadError)
+    {
         std::cerr << loadError.what() << std::endl;
         exit(0);
     }
 
-    try {
-        std::thread showPercentThread([&]() {
+    try
+    {
+        std::thread showPercentThread([&]()
+        {
             unsigned char doneStateInPercent =  SteganoHide::getInstance().getDoneStateInPercent();
-            while(doneStateInPercent < 100) {
+            while(doneStateInPercent < 100)
+            {
                 // need to flush that the cursor is always at the end of the line.
                 std::cout.flush();
                 std::cout << "\r" << (int)doneStateInPercent << " / 100%";
@@ -96,8 +118,10 @@ void hideFile() {
             }
         });
         showPercentThread.detach();
-         SteganoHide::getInstance().hideFile(inputFileStream, "empty");
-    } catch (SteganoException &stegoException) {
+        SteganoHide::getInstance().hideFile(inputFileStream, "empty");
+    }
+    catch (std::exception &stegoException)
+    {
         std::cerr << stegoException.what() << std::endl;
         exit(0);
     }
@@ -107,7 +131,8 @@ void hideFile() {
     std::cout << "\nHiding successful!" << std::endl;
 }
 
-void unhideFile() {
+void unhideFile()
+{
     std::string outputFile, containerFile;
     cin.ignore (std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Enter the container file: ";
@@ -117,18 +142,24 @@ void unhideFile() {
     std::getline(std::cin, outputFile);
 
 
-    try {
-        SteganoUnhide::getInstance().loadPicture(containerFile);
-    } catch (SteganoException &loadError) {
+    try
+    {
+        SteganoExpose::getInstance().loadPicture(containerFile);
+    }
+    catch (std::exception &loadError)
+    {
         std::cerr << loadError.what() << std::endl;
         exit(0);
     }
 
 
     std::ofstream outputFileStream(outputFile, std::ofstream::out | std::ofstream::binary);
-    try {
-        outputFileStream << SteganoUnhide::getInstance().unhidePhrase("empty").rdbuf();
-    } catch (SteganoException &stegoException) {
+    try
+    {
+        outputFileStream << SteganoExpose::getInstance().unhidePhrase("empty").rdbuf();
+    }
+    catch (std::exception &stegoException)
+    {
         std::cerr << stegoException.what() << std::endl;
         exit(0);
     }

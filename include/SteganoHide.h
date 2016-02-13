@@ -16,35 +16,35 @@
  */
 class SteganoHide : public Stegano
 {
-    public:
-        virtual ~SteganoHide();
-        SteganoHide(SteganoHide const&) = delete;
-        void operator=(SteganoHide const&) = delete;
+public:
+    virtual ~SteganoHide();
+    SteganoHide(SteganoHide const&) = delete;
+    void operator=(SteganoHide const&) = delete;
 
-        void setOutputFilePath(const std::string &);
-        void hidePhrase(const std::string &, const std::string &);
-        void hideFile(std::ifstream &, const std::string &);
-        void saveChangesToDisk();
-        unsigned char getDoneStateInPercent();
-        static SteganoHide &getInstance();
-    protected:
-        SteganoHide();
-    private:
-        void hideByteAtPixel(const unsigned char &, Pixel &);
-        bool hideNumberInMagickColorRGB(const unsigned short &, Magick::ColorRGB &);
-        void drawFinishPixel(const Pixel &);
-        Pixel calculateHidingPosition(const unsigned int &);
-        unsigned short calculateOverflowNumber(const unsigned char &);
-        unsigned short calculateNumberAfterOverflow(const unsigned char &);
-        bool isPixelEmpty(const Pixel &);
-        void normalizeImage();
-        void resetNormalizedImage();
+    void setOutputFilePath(const std::string &);
+    void hidePhrase(const std::string &, const std::string &);
+    void hideFile(std::ifstream &, const std::string &);
+    void saveChangesToDisk();
+    unsigned char getDoneStateInPercent();
+    static SteganoHide &getInstance();
+protected:
+    SteganoHide();
+private:
+    void hideByteAtPixel(const unsigned char &, Pixel &);
+    bool hideNumberInMagickColorRGB(const unsigned short &, Magick::ColorRGB &);
+    void drawFinishPixel(const Pixel &);
+    Pixel calculateHidingPosition(const unsigned int &);
+    unsigned short calculateOverflowNumber(const unsigned char &);
+    unsigned short calculateNumberAfterOverflow(const unsigned char &);
+    bool isPixelEmpty(const Pixel &);
+    void normalizeImage();
+    void resetNormalizedImage();
 
-        uint64_t hundredPercentValue;
-        uint64_t doneBytes;
-        std::string outputFilePath;
+    uint64_t hundredPercentValue;
+    uint64_t doneBytes;
+    std::string outputFilePath;
 
-        Magick::Image origImageBackup;
+    Magick::Image origImageBackup;
 };
 
 #endif // STEGANOHIDE_H

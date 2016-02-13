@@ -312,7 +312,7 @@ bg=green</panel_attributes>
       <h>344</h>
     </coordinates>
     <panel_attributes>hideFile(std::ifstream &amp;toHideFileStream, const std::string &amp;password)
-[O(n) + fileSize * O(n) = O(n)]
+[O(n) + 2 * (fileSize * O(n)) = O(n)]
 valign=top
 fontsize=30</panel_attributes>
     <additional_attributes/>
@@ -706,7 +706,7 @@ bg=green</panel_attributes>
     <coordinates>
       <x>1288</x>
       <y>732</y>
-      <w>76</w>
+      <w>80</w>
       <h>32</h>
     </coordinates>
     <panel_attributes>lt=&lt;-

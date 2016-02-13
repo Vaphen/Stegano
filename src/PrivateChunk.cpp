@@ -1,11 +1,13 @@
 #include "PrivateChunk.h"
 
-PrivateChunk::PrivateChunk(const std::string &from, const std::string &to) {
+PrivateChunk::PrivateChunk(const std::string &from, const std::string &to)
+{
     inputStream.open(from, std::fstream::binary);
     outputStream.open(to, std::fstream::binary);
 }
 
-PrivateChunk::~PrivateChunk() {
+PrivateChunk::~PrivateChunk()
+{
     inputStream.close();
     outputStream.close();
 }
@@ -18,9 +20,11 @@ PrivateChunk::~PrivateChunk() {
  * \throw exception, if the given chunk was invalid
  *
  */
-void PrivateChunk::addChunk(Chunk &chunk, const char *data, const uint32_t &dataLength) {
+void PrivateChunk::addChunk(Chunk &chunk, const char *data, const uint32_t &dataLength)
+{
     // check for valid png-file header
-    if(!hasValidFileHeader()) {
+    if(!hasValidFileHeader())
+    {
         throw ChunkException::PNGHeaderInvalid();
     }
 
@@ -30,7 +34,8 @@ void PrivateChunk::addChunk(Chunk &chunk, const char *data, const uint32_t &data
 
     // copy all bytes from the input-file to the output-file until we reach the IEND-chunk
     inputStream.rdbuf()->pubseekpos(0);
-    for(unsigned int i = 0; i < posEndChunk; i++) {
+    for(unsigned int i = 0; i < posEndChunk; i++)
+    {
         outputStream.put(inputStream.rdbuf()->sbumpc());
     }
 
@@ -47,10 +52,11 @@ void PrivateChunk::addChunk(Chunk &chunk, const char *data, const uint32_t &data
     outputStream.write(data, dataLength);
     outputStream.write(reinterpret_cast<char*>(&calculatedCrcSum), 4);
     // this simulates the crc-checksum. We may implement a crc-check...
-   //outputStream << char(0x00) << char(0x00) << char(0x00) << char(0x00);
+    //outputStream << char(0x00) << char(0x00) << char(0x00) << char(0x00);
 
     // finally copy the end-chunk
-    while(inputStream.rdbuf()->in_avail() > 0) {
+    while(inputStream.rdbuf()->in_avail() > 0)
+    {
         outputStream.put(inputStream.rdbuf()->sbumpc());
     }
 }
@@ -62,7 +68,8 @@ void PrivateChunk::addChunk(Chunk &chunk, const char *data, const uint32_t &data
  * \return uint32_t the crc32-hash of the given data
  *
  */
-uint32_t PrivateChunk::calculateCRC(const std::string &nameData) {
+uint32_t PrivateChunk::calculateCRC(const std::string &nameData)
+{
     char *wholeData = const_cast<char*>(nameData.c_str());
     uint32_t calculatedCRC = CRC().crc(reinterpret_cast<unsigned char*>(wholeData), nameData.size());
     // the bytes are in the wrong order for output to chunk; we have to inverse them
@@ -75,11 +82,13 @@ uint32_t PrivateChunk::calculateCRC(const std::string &nameData) {
  * \return std::fstream::pos_type the position right in front of the length of the chunk if found, else -1
  * TODO: What happens if the chunk is not found?
  */
-std::fstream::pos_type PrivateChunk::getPositionOf(Chunk &chunk) {
+std::fstream::pos_type PrivateChunk::getPositionOf(Chunk &chunk)
+{
     // the first 8 bytes are preserved for the png-format. we can simply skip them.
     inputStream.seekg(8);
 
-    while(inputStream.good()) {
+    while(inputStream.good())
+    {
         char lengthOfChunk[4];
         char chunkName[4];
 
@@ -91,7 +100,8 @@ std::fstream::pos_type PrivateChunk::getPositionOf(Chunk &chunk) {
         uint32_t lengthOfChunkInBytes = convertCharArrayToInt(&lengthOfChunk[0], 4);
 
         // check if we found what we searched
-        if(std::strncmp(&chunkName[0], chunk.toString().c_str(), 4) == 0) {
+        if(std::strncmp(&chunkName[0], chunk.toString().c_str(), 4) == 0)
+        {
             // decrease current position by 8 because we've already read the next 8 bytes (name and length)
             inputStream.seekg(-8, std::ios_base::cur);
             break;
@@ -111,9 +121,11 @@ std::fstream::pos_type PrivateChunk::getPositionOf(Chunk &chunk) {
  * \param &sizeOfArray const unsignedint the size of the array
  * \return uint32_t the 32-bit integer that was saved in the char-array
  */
-uint32_t PrivateChunk::convertCharArrayToInt(char *curByte, const unsigned int &sizeOfArray) {
+uint32_t PrivateChunk::convertCharArrayToInt(char *curByte, const unsigned int &sizeOfArray)
+{
     uint32_t lengthOfChunkInBytes = 0x00;
-    for(unsigned int i = 0; i < sizeOfArray; i++) {
+    for(unsigned int i = 0; i < sizeOfArray; i++)
+    {
         lengthOfChunkInBytes = lengthOfChunkInBytes << 8;
         lengthOfChunkInBytes |= *reinterpret_cast<unsigned char*>(curByte);
         curByte++;
@@ -127,7 +139,8 @@ uint32_t PrivateChunk::convertCharArrayToInt(char *curByte, const unsigned int &
  * \return uint32_t the size of the chunk
  *
  */
-uint32_t PrivateChunk::getChunkSize(Chunk &chunk) {
+uint32_t PrivateChunk::getChunkSize(Chunk &chunk)
+{
     // save the ifstream-position to reset it at the end of this function
     std::fstream::pos_type resetPos = inputStream.tellg();
 
@@ -142,7 +155,8 @@ uint32_t PrivateChunk::getChunkSize(Chunk &chunk) {
 /** \brief Close opened streames to make the files available for other operations
  * Must be called before the files are edited by other classes.
  */
-void PrivateChunk::finish() {
+void PrivateChunk::finish()
+{
     inputStream.close();
     outputStream.close();
 }
@@ -153,7 +167,8 @@ void PrivateChunk::finish() {
  * \param chunk Chunk& the chunk thats data-section should be read
  * \param storageArray char* a pointer to an array that is at least as big as the chunks data section
  */
-void PrivateChunk::readChunk(Chunk &chunk, char *storageArray) {
+void PrivateChunk::readChunk(Chunk &chunk, char *storageArray)
+{
     uint32_t lengthOfChunkInBytes = getChunkSize(chunk);
 
     // we want to read the data so we can skip the length and name of the chunk (8 bytes)
@@ -161,8 +176,9 @@ void PrivateChunk::readChunk(Chunk &chunk, char *storageArray) {
     this->inputStream.seekg(8, std::ios_base::cur);
 
     // read the data
-    for(unsigned int i = 0; i < lengthOfChunkInBytes; i++) {
-       *storageArray = inputStream.get();
+    for(unsigned int i = 0; i < lengthOfChunkInBytes; i++)
+    {
+        *storageArray = inputStream.get();
         storageArray++;
     }
 }
@@ -171,7 +187,8 @@ void PrivateChunk::readChunk(Chunk &chunk, char *storageArray) {
  *
  * \return bool true, if the header was valid, else false
  */
-bool PrivateChunk::hasValidFileHeader() {
+bool PrivateChunk::hasValidFileHeader()
+{
     char readFileHeader[8];
     const unsigned char pngFileHeader[8] = {137, 80, 78, 71, 13, 10, 26, 10};
     this->inputStream.read(readFileHeader, 8);
@@ -183,10 +200,11 @@ bool PrivateChunk::hasValidFileHeader() {
  * \param input uint32_t the integer thats bytes should be inversed
  * \return uint32_t the inversed integer value
  */
-uint32_t PrivateChunk::endianConversation(uint32_t input) {
+uint32_t PrivateChunk::endianConversation(uint32_t input)
+{
     // This strange constructs works: 01 02 03 04 -> 04 03 02 01
-   return  ((input >> 24) & 0x000000FF) |
-           ((input >> 8)  & 0x0000FF00) |
-           ((input << 8)  & 0x00FF0000) |
-           ((input << 24) & 0xFF000000);
+    return  ((input >> 24) & 0x000000FF) |
+            ((input >> 8)  & 0x0000FF00) |
+            ((input << 8)  & 0x00FF0000) |
+            ((input << 24) & 0xFF000000);
 }

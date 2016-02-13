@@ -5,10 +5,11 @@ SteganoHide::SteganoHide() : hundredPercentValue(0), doneBytes(0), outputFilePat
 SteganoHide::~SteganoHide() { }
 
 /** \brief Save the created image to disk.
+ *  \throw SteganoException::OutputFileNotSpecified if the output-file was not set
  */
 void SteganoHide::saveChangesToDisk() {
     if(outputFilePath.empty()) {
-        throw outputFileNotSpecified;
+        throw SteganoException::OutputFileNotSpecified();
     }
     unsigned int randNo = getRandomNumber(0, 99999999);
     this->steganoImage.write("/tmp/" + std::to_string(randNo));
@@ -16,25 +17,29 @@ void SteganoHide::saveChangesToDisk() {
     PrivateChunk privChunk("/tmp/" + std::to_string(randNo), outputFilePath);
     privChunk.addChunk(hideChunk, this->usedPixels.c_str(), this->usedPixels.size());
     privChunk.finish();
+    //std::cout << "I'm finished" << std::endl;
 }
 
 /** \brief Hide a phrase (string) in the loaded picture
  *
  * \param &phraseToHide const std::string the information that should be hidden in the picture
  * \param &password const std::string a password that is not used right now
- * \throw SteganoException imgNotLoaded if no container file is loaded.
- * \throw SteganoException img2small if the loaded image is too small to hide the given phrase
+ * \throw SteganoException::ImgNotLoaded if no container file is loaded.
+ * \throw SteganoException::Img2Small if the loaded image is too small to hide the given phrase
  */
 void SteganoHide::hidePhrase(const std::string &phraseToHide, const std::string &password) {
-    this->origImageBackup = this->steganoImage;
     if(!this->steganoImage.isValid()) {
-        throw imgNotLoaded;
+        throw SteganoException::ImgNotLoaded();
     }
 
     // we need to divide it by 2 because in worst case every byte takes 2 pixel
-    if(phraseToHide.size() > (this->xResolution * this->yResolution) / 2) {
-        throw img2small;
+    if(phraseToHide.size() > (this->pixelAmount) / 2) {
+        throw SteganoException::Img2Small();
     }
+
+    this->doneBytes = 0;
+    this->hundredPercentValue = phraseToHide.size() + 2 * this->pixelAmount;
+    this->origImageBackup = this->steganoImage;
 
     normalizeImage();
 
@@ -43,11 +48,11 @@ void SteganoHide::hidePhrase(const std::string &phraseToHide, const std::string 
      //   std::cout << hidingPixel.x << ":" << hidingPixel.y << std::endl;
 
         hideByteAtPixel(phraseToHide.at(i), hidingPixel);
+        this->doneBytes++;
     }
-    Pixel hidingPixel = calculateHidingPosition(phraseToHide.size());
 
-     drawFinishPixel(hidingPixel);
-     resetNormalizedImage();
+    drawFinishPixel(calculateHidingPosition(phraseToHide.size()));
+    resetNormalizedImage();
 }
 
 
@@ -55,29 +60,28 @@ void SteganoHide::hidePhrase(const std::string &phraseToHide, const std::string 
  * It loads the streamsize to this->hundredPercentValue and the amount of finished bytes to this->doneBytes
  * \param &toHideFileStream std::ifstream the filestream whose contents should be hidden in the picture (should be opened binary)
  * \param &password const std::string the password (not used yet)
- * \throw SteganoException imgNotLoaded if no container file is loaded.
- * \throw SteganoException img2small if the loaded image is too small to hide the given phrase
- * \throw SteganoException fileStreamClosed if the specified fileStream is not opened
+ * \throw SteganoException::ImgNotLoaded if no container file is loaded.
+ * \throw SteganoException::Img2Small if the loaded image is too small to hide the given phrase
+ * \throw SteganoException::FileStreamClosed if the specified fileStream is not opened
  */
 void SteganoHide::hideFile(std::ifstream &toHideFileStream, const std::string &password) {
-    this->origImageBackup = this->steganoImage;
-    this->doneBytes = 0;
-    // 2 * |imagePixel| because we normalize all pixels first and afterwards we reset it.
-    this->hundredPercentValue = getFileStreamSizeInBytes(toHideFileStream) + 2 * (this->xResolution * this->yResolution);
-
     if(!this->steganoImage.isValid()) {
-        throw imgNotLoaded;
+        throw SteganoException::ImgNotLoaded();
     }
 
     // we need to divide it by 2 because in worst case every byte takes 2 pixel
-    // TODO: reimplement a check like this one
     if(getFileStreamSizeInBytes(toHideFileStream) > (this->xResolution * this->yResolution) / 2) {
-        throw img2small;
+        throw SteganoException::Img2Small();
     }
 
     if(!toHideFileStream.is_open()) {
-        throw fileStreamClosed;
+        throw SteganoException::FileStreamClosed();
     }
+
+    this->origImageBackup = this->steganoImage;
+    this->doneBytes = 0;
+    // 2 * |imagePixel| because we normalize all pixels first and afterwards we reset it.
+    this->hundredPercentValue = getFileStreamSizeInBytes(toHideFileStream) + 2 * this->pixelAmount;
 
     normalizeImage();
     unsigned int loopCount = 0;
@@ -102,10 +106,9 @@ void SteganoHide::hideFile(std::ifstream &toHideFileStream, const std::string &p
  */
 Pixel SteganoHide::calculateHidingPosition(const unsigned int &pixelNum) {
     Pixel returnPixel(0, 0);
-    int steps = quadraticSondation(pixelNum, this->xResolution * this->yResolution);
     //std::cout << "sondation faktor: " << pixelNum << " steps: " << steps << std::endl;
 
-    pushPixelBy(returnPixel, steps);
+    pushPixelBy(returnPixel, quadraticSondation(pixelNum, this->pixelAmount));
     //std::cout << returnPixel.x << ":" << returnPixel.y << std::endl;
     Pixel nextPixel(returnPixel);
     incrementPixel(nextPixel);
@@ -257,7 +260,7 @@ bool SteganoHide::hideNumberInMagickColorRGB(const unsigned short &smallNumber, 
     roundedRGB.blue += leastSignificantBit;
     //std::cout << (int)roundedRGB.blue << std::endl;
 
-    color = Magick::ColorRGB(getRGBString(roundedRGB));
+    color = Magick::ColorRGB(roundedRGB.toString());
     return true;
 }
 
@@ -277,7 +280,7 @@ void SteganoHide::drawFinishPixel(const Pixel &pixel) {
     pixelRGB.green = pixelRGB.green - (pixelRGB.green % 10);
     pixelRGB.blue = pixelRGB.blue - (pixelRGB.blue % 10);
 
-    this->steganoImage.pixelColor(pixel.x, pixel.y, Magick::ColorRGB(getRGBString(pixelRGB)));
+    this->steganoImage.pixelColor(pixel.x, pixel.y, Magick::ColorRGB(pixelRGB.toString()));
 }
 
 
@@ -310,7 +313,7 @@ void SteganoHide::normalizeImage() {
             RGB curPixelRoundedRGB(curPixelRGB.red - (curPixelRGB.red % 10) + 5,
                                    curPixelRGB.green - (curPixelRGB.green % 10) + 5,
                                    curPixelRGB.blue - (curPixelRGB.blue % 10) + 5);
-            this->steganoImage.pixelColor(xValue, yValue, Magick::ColorRGB(getRGBString(curPixelRoundedRGB)));
+            this->steganoImage.pixelColor(xValue, yValue, Magick::ColorRGB(curPixelRoundedRGB.toString()));
         }
         this->doneBytes += this->yResolution;
     }

@@ -45,6 +45,8 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename="include/ChunkExceptions.h" />
+		<Unit filename="include/GUI/ActionNotebookPage.h" />
+		<Unit filename="include/GUI/Dialogs.h" />
 		<Unit filename="include/GUI/ExposePage.h" />
 		<Unit filename="include/GUI/GUI.h" />
 		<Unit filename="include/GUI/HidePage.h" />
@@ -53,10 +55,12 @@
 		<Unit filename="include/PrivateChunk.h" />
 		<Unit filename="include/Stegano.h" />
 		<Unit filename="include/SteganoExceptions.h" />
+		<Unit filename="include/SteganoExpose.h" />
 		<Unit filename="include/SteganoHide.h" />
 		<Unit filename="include/SteganoStructs.h" />
-		<Unit filename="include/SteganoUnhide.h" />
 		<Unit filename="include/Strings.h" />
+		<Unit filename="src/GUI/ActionNotebookPage.cpp" />
+		<Unit filename="src/GUI/Dialogs.cpp" />
 		<Unit filename="src/GUI/ExposePage.cpp" />
 		<Unit filename="src/GUI/GUI.cpp" />
 		<Unit filename="src/GUI/HidePage.cpp" />
@@ -64,8 +68,8 @@
 		<Unit filename="src/GUI/customWidgets/ImagePanel.cpp" />
 		<Unit filename="src/PrivateChunk.cpp" />
 		<Unit filename="src/Stegano.cpp" />
+		<Unit filename="src/SteganoExpose.cpp" />
 		<Unit filename="src/SteganoHide.cpp" />
-		<Unit filename="src/SteganoUnhide.cpp" />
 		<Unit filename="test.cpp" />
 		<Unit filename="test.h" />
 		<Unit filename="wxsmith/GUI.wxs" />

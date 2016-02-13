@@ -9,7 +9,7 @@
 #include <thread>
 #include <wx/wx.h>
 #include "include/SteganoHide.h"
-#include "include/SteganoUnhide.h"
+#include "include/SteganoExpose.h"
 #include "include/SteganoExceptions.h"
 #include "GUI.h"
 
@@ -18,7 +18,7 @@
 
 class MyApp : public wxApp
 {
-  public:
+public:
     virtual bool OnInit();
 };
 

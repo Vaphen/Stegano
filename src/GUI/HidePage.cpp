@@ -1,15 +1,16 @@
 #include "HidePage.h"
 
-BEGIN_EVENT_TABLE(HidePage, wxNotebookPage)
+BEGIN_EVENT_TABLE(HidePage, ActionNotebookPage)
     EVT_BUTTON(ID_SelectOutputFile, HidePage::OnSelectOutputFileClicked)
-    EVT_BUTTON(ID_SelectContainerFile, HidePage::OnOpenFileClicked)
-    EVT_BUTTON(ID_SelectHideFile, HidePage::OnOpenFileClicked)
+    EVT_BUTTON(ID_SelectContainerFile, HidePage::OnOpenContainerFileClicked)
+    EVT_BUTTON(ID_SelectHideFile, HidePage::OnOpenHideFileClicked)
     EVT_RADIOBUTTON(ID_HideFileRadio, HidePage::HideRadioChanged)
     EVT_RADIOBUTTON(ID_HideTextRadio, HidePage::HideRadioChanged)
     EVT_BUTTON(ID_Start, HidePage::OnStart)
 END_EVENT_TABLE()
 
-HidePage::HidePage(wxWindow *parent, int widgetID) : wxNotebookPage(parent, widgetID)
+HidePage::HidePage(wxWindow *parent, int widgetID) :
+    ActionNotebookPage(parent, widgetID)
 {
     wxBoxSizer *hideSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -25,7 +26,7 @@ HidePage::HidePage(wxWindow *parent, int widgetID) : wxNotebookPage(parent, widg
     addContainerFileArea();
 
     // File-Radio
-    wxRadioButton *hideFileRadio = new wxRadioButton(this, ID_HideFileRadio, "Datei verstecken");
+    hideFileRadio = new wxRadioButton(this, ID_HideFileRadio, "Datei verstecken");
     form->Add(hideFileRadio, wxGBPosition(2, 0));
     form->Add(new wxStaticText(this, wxID_ANY, _T("")), wxGBPosition(2, 1));
     form->Add(new wxStaticText(this, wxID_ANY, _T("")), wxGBPosition(2, 2));
@@ -33,7 +34,7 @@ HidePage::HidePage(wxWindow *parent, int widgetID) : wxNotebookPage(parent, widg
     addFileToHideArea();
 
     // Text-Radio
-    wxRadioButton *hideTextRadio = new wxRadioButton(this, ID_HideTextRadio, "Text verstecken");
+    hideTextRadio = new wxRadioButton(this, ID_HideTextRadio, "Text verstecken");
     form->Add(hideTextRadio, wxGBPosition(4, 0));
     form->Add(new wxStaticText(this, wxID_ANY, _T("")), wxGBPosition(4, 1));
     form->Add(new wxStaticText(this, wxID_ANY, _T("")), wxGBPosition(4, 2));
@@ -55,7 +56,8 @@ HidePage::HidePage(wxWindow *parent, int widgetID) : wxNotebookPage(parent, widg
 
 HidePage::~HidePage() { }
 
-void HidePage::addOutputFileArea() {
+void HidePage::addOutputFileArea()
+{
     wxStaticText *outputFileLabel = new wxStaticText(this, wxID_ANY, "Ausgabe-Datei: ", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
     outputFileInput = new wxTextCtrl(this, wxID_ANY, _T(""), wxDefaultPosition, wxSize(240, -1), wxALIGN_LEFT);
     outputFileInput->Disable();
@@ -66,7 +68,8 @@ void HidePage::addOutputFileArea() {
     form->Add(openOutputDialogButton, wxGBPosition(0, 2));
 }
 
-void HidePage::addContainerFileArea() {
+void HidePage::addContainerFileArea()
+{
     wxStaticText *containerFileLabel = new wxStaticText(this, wxID_ANY, "Kontainer-Datei: ", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
     containerFileInput = new wxTextCtrl(this, wxID_ANY, _T(""), wxDefaultPosition, wxSize(240, -1), wxALIGN_LEFT);
     containerFileInput->Disable();
@@ -77,7 +80,8 @@ void HidePage::addContainerFileArea() {
     form->Add(openContainerDialogButton, wxGBPosition(1, 2));
 }
 
-void HidePage::addFileToHideArea() {
+void HidePage::addFileToHideArea()
+{
     wxStaticText *hideFileLabel = new wxStaticText(this, wxID_ANY, "zu versteckende Datei: ", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
     hideFileInput = new wxTextCtrl(this, wxID_ANY, _T(""), wxDefaultPosition, wxSize(240, -1), wxALIGN_LEFT);
     hideFileInput->Disable();
@@ -88,62 +92,16 @@ void HidePage::addFileToHideArea() {
     form->Add(openHideFileDialogButton, wxGBPosition(3, 2));
 }
 
-void HidePage::addPhraseToHideArea() {
+void HidePage::addPhraseToHideArea()
+{
     textToHideCtrl = new wxTextCtrl(this, wxID_ANY, _T(""), wxDefaultPosition, wxSize(440, 200), wxTE_MULTILINE);
     textToHideCtrl->Enable(false);
 
-     form->Add(textToHideCtrl, wxGBPosition(5, 0), wxGBSpan(1, 3));
+    form->Add(textToHideCtrl, wxGBPosition(5, 0), wxGBSpan(1, 3));
 }
 
-void HidePage::OnStart(wxCommandEvent &event) {
-    std::string outputFilePath = outputFileInput->GetValue().ToStdString();
-    std::string containerFilePath = containerFileInput->GetValue().ToStdString();
-    std::string hideFilePath = hideFileInput->GetValue().ToStdString();
-
-    if(outputFilePath.empty() || containerFilePath.empty() || hideFilePath.empty()) {
-        ShowErrorDialog(_T("Steganographie war nicht möglich"), _T("Ein benötigtes Feld wurde nicht hinreichend ausgefüllt."));
-        return;
-    }
-
-    if(outputFilePath.substr(outputFilePath.find_last_of(".") + 1) != "png" &&
-       outputFilePath.substr(outputFilePath.find_last_of(".") + 1) != "PNG") {
-        outputFilePath += ".png";
-       }
-
-    try {
-         SteganoHide::getInstance().loadPicture(containerFilePath);
-    } catch(SteganoException &ex) {
-        wxString messageText = ex.what();
-        ShowErrorDialog(_T("Es ist ein Fehler aufgetreten"), messageText);
-    }
-
-    startHidingButton->Enable(false);
-    progressBar->SetValue(0);
-    std::thread workThread([=]() mutable {
-        try {
-            std::ifstream hideFileStream(hideFilePath, std::fstream::binary);
-            SteganoHide::getInstance().setOutputFilePath(outputFilePath);
-            SteganoHide::getInstance().hideFile(hideFileStream, "notusedpassword");
-            SteganoHide::getInstance().saveChangesToDisk();
-            hideFileStream.close();
-        }catch(SteganoException &ex) {
-            wxString messageText = ex.what();
-            ShowErrorDialog(_T("Error hiding file"), messageText);
-        }
-    });
-    workThread.detach();
-    std::thread prograssBarThread([&] () {
-        while(progressBar->GetValue() < 100) {
-            progressBar->SetValue(SteganoHide::getInstance().getDoneStateInPercent());
-        }
-        // we have to wait one second until user can repress the button because the ressources aren't freed properly íf we don't
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        startHidingButton->Enable(true);
-    });
-    prograssBarThread.detach();
-}
-
-void HidePage::OnOpenFileClicked(wxCommandEvent& event) {
+void HidePage::OnOpenHideFileClicked(wxCommandEvent& event)
+{
     wxFileDialog openFileDialog(this, _("Eingabedatei wählen"), "", "", "Alle Dateien (*.*)|*.*", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
     // user cancelled his action
     if (openFileDialog.ShowModal() == wxID_CANCEL)
@@ -151,52 +109,202 @@ void HidePage::OnOpenFileClicked(wxCommandEvent& event) {
 
     std::string userInputPath = openFileDialog.GetPath().ToStdString();
     std::ifstream userChosenFileStream(userInputPath);
-    if(!userChosenFileStream.good()) {
+    if(!userChosenFileStream.good())
+    {
+        userChosenFileStream.close();
         return;
     }
-    if(event.GetId() == ID_SelectHideFile) {
+    if(event.GetId() == ID_SelectHideFile)
+    {
         hideFileInput->ChangeValue(userInputPath);
         hideFileInput->SetInsertionPointEnd();
-    } else {
+    }
+    else
+    {
         containerFileInput->ChangeValue(userInputPath);
         containerFileInput->SetInsertionPointEnd();
     }
     userChosenFileStream.close();
 }
 
-void HidePage::OnSelectOutputFileClicked(wxCommandEvent &event) {
+void HidePage::OnOpenContainerFileClicked(wxCommandEvent& event)
+{
+    wxFileDialog openFileDialog(this, _("Containerdatei wählen"), "", "", "Alle Bilddateien (*.png;*.jpg;*.jpeg;*.bmp;*.tiff)|*.png;*.jpg;*.jpg;*.bmp;*.tiff", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+    // user cancelled his action
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    std::string userInputPath = openFileDialog.GetPath().ToStdString();
+    std::ifstream userChosenFileStream(userInputPath);
+    if(!userChosenFileStream.good())
+    {
+        userChosenFileStream.close();
+        return;
+    }
+    if(event.GetId() == ID_SelectHideFile)
+    {
+        hideFileInput->ChangeValue(userInputPath);
+        hideFileInput->SetInsertionPointEnd();
+    }
+    else
+    {
+        containerFileInput->ChangeValue(userInputPath);
+        containerFileInput->SetInsertionPointEnd();
+    }
+    userChosenFileStream.close();
+}
+
+void HidePage::OnSelectOutputFileClicked(wxCommandEvent &event)
+{
     wxFileDialog openFileDialog(this, _("Open XYZ file"), "", "", "PortableNetworkGraphics files (*.png)|*.png", wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 
     // user cancelled his action
     if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;
 
-    std::string userInputPath = openFileDialog.GetPath().ToStdString();
-    std::ofstream userChosenFileStream(userInputPath, std::ofstream::app);
-    if(!userChosenFileStream.good()) {
-        return;
-    }
-    outputFileInput->ChangeValue(userInputPath);
+    outputFileInput->ChangeValue(openFileDialog.GetPath().ToStdString());
     outputFileInput->SetInsertionPointEnd();
-    userChosenFileStream.close();
 }
 
-void HidePage::HideRadioChanged(wxCommandEvent& event) {
-    if(event.GetId() == ID_HideTextRadio) {
+void HidePage::HideRadioChanged(wxCommandEvent& event)
+{
+    if(event.GetId() == ID_HideTextRadio)
+    {
         openHideFileDialogButton->Enable(false);
         textToHideCtrl->Enable(true);
-    } else {
+    }
+    else
+    {
         openHideFileDialogButton->Enable(true);
         textToHideCtrl->Enable(false);
     }
 }
 
+void HidePage::OnStart(wxCommandEvent &event)
+{
+    std::string outputFilePath = outputFileInput->GetValue().ToStdString();
+    std::string containerFilePath = containerFileInput->GetValue().ToStdString();
 
 
-// TODO: this is somehow not working
-void HidePage::ShowErrorDialog(const wxString &title, const wxString &message) {
-  wxMessageDialog *dial = new wxMessageDialog(this, message, title, wxICON_ERROR);
-  dial->ShowModal();
+    if(outputFilePath.empty() || containerFilePath.empty())
+    {
+        dialogBuilder.ShowErrorDialog(_T("Steganographie war nicht möglich"), _T("Ein benötigtes Feld wurde nicht hinreichend ausgefüllt."));
+        return;
+    }
+
+    if(outputFilePath.substr(outputFilePath.find_last_of(".") + 1) != "png" &&
+            outputFilePath.substr(outputFilePath.find_last_of(".") + 1) != "PNG")
+    {
+        outputFilePath += ".png";
+    }
+
+    try
+    {
+        SteganoHide::getInstance().loadPicture(containerFilePath);
+    }
+    catch(std::exception &ex)
+    {
+        wxString messageText(_T("Die Kontainer-Datei konnte nicht geöffnet werden. Handelt es sich um eine Bilddatei?\n\nFehlermeldung:\n"));
+        messageText.Append(ex.what());
+        dialogBuilder.ShowErrorDialog(_T("Es ist ein Fehler aufgetreten"), messageText);
+        return;
+    }
+
+    disableInputElements();
+    progressBar->SetValue(0);
+    if(hideFileRadio->GetValue())
+    {
+        hideFileSelected(outputFilePath);
+    }
+    else
+    {
+        hideTextSelected(outputFilePath);
+    }
+    startProgressbarThread();
 }
 
 
+void HidePage::hideFileSelected(const std::string &outputFilePath)
+{
+    std::thread workThread([this, outputFilePath]()
+    {
+        // set running to true: progressbar should show current state
+        steganoRunning = true;
+        try
+        {
+            std::string hideFilePath = hideFileInput->GetValue().ToStdString();
+            std::ifstream hideFileStream(hideFilePath, std::fstream::binary);
+            if(!hideFileStream.good())
+            {
+                throw SteganoException::HideFileNotExistant();
+            }
+            SteganoHide::getInstance().setOutputFilePath(outputFilePath);
+            SteganoHide::getInstance().hideFile(hideFileStream, "notusedpassword");
+            SteganoHide::getInstance().saveChangesToDisk();
+            hideFileStream.close();
+        }
+        catch(std::exception &ex)
+        {
+            sendThreadMsg(MessageData("An error occured", wxString(ex.what())));
+            steganoRunning = false;
+            return;
+        }
+        steganoRunning = false;
+        sendThreadMsg(MessageData("Hiding finished!", "The file was successfull hidden."));
+    });
+    workThread.detach();
+}
+
+void HidePage::hideTextSelected(const std::string &outputFilePath)
+{
+    steganoRunning = true;
+    std::string hideText = textToHideCtrl->GetValue().ToStdString();
+    assert(hideText != "");
+    std::thread workThread([=]() mutable
+    {
+        try {
+            SteganoHide::getInstance().setOutputFilePath(outputFilePath);
+            SteganoHide::getInstance().hidePhrase(hideText, "notusedpassword");
+            SteganoHide::getInstance().saveChangesToDisk();
+        }
+        catch(std::exception &ex)
+        {
+            sendThreadMsg(MessageData(_T("Error hiding text"), wxString(ex.what())));
+            steganoRunning = false;
+            return;
+        }
+        steganoRunning = false;
+        sendThreadMsg(MessageData(_T("Hiding finished!"), "The entered text was successfull hidden."));
+    });
+    workThread.detach();
+}
+
+void HidePage::startProgressbarThread()
+{
+    std::thread prograssBarThread([this] ()
+    {
+        startHidingButton->SetLabel(_T("Verstecke..."));
+        while(steganoRunning)
+        {
+            progressBar->SetValue(SteganoHide::getInstance().getDoneStateInPercent());
+        }
+    });
+    prograssBarThread.detach();
+}
+
+void HidePage::disableInputElements()
+{
+    startHidingButton->Enable(false);
+    textToHideCtrl->Enable(false);
+}
+
+void HidePage::reenableElements()
+{
+    startHidingButton->SetLabel(_T("Start!"));
+    startHidingButton->Enable(true);
+    // set the textinputfield editable after we finished
+    if(hideTextRadio->GetValue())
+    {
+        textToHideCtrl->Enable(true);
+    }
+}

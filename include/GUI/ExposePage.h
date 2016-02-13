@@ -7,28 +7,37 @@
 #include <wx/gbsizer.h>
 #include <thread>
 
-#include "SteganoUnhide.h"
+#include "SteganoExpose.h"
+#include "ActionNotebookPage.h"
 
-class ExposePage : public wxNotebookPage
+class ExposePage : public ActionNotebookPage
 {
-    public:
-        ExposePage() = delete;
-        ExposePage(wxWindow*, int);
-        virtual ~ExposePage();
-    protected:
-    private:
-        wxBoxSizer *mainSizer;
-        wxTextCtrl *inputFileCtrl;
-        wxTextCtrl *outputFileCtrl;
-        wxButton *startBtn;
-        wxGauge *progressBar;
+public:
+    ExposePage() = delete;
+    ExposePage(wxWindow*, int);
+    virtual ~ExposePage();
+protected:
+private:
+    wxBoxSizer *mainSizer;
+    wxTextCtrl *inputFileCtrl;
+    wxTextCtrl *outputFileCtrl;
+    wxButton *startBtn;
+    wxGauge *progressBar;
 
-        // events
-        void OnOpenInputDialogClicked(wxCommandEvent &);
-        void OnOpenOutputDialogClicked(wxCommandEvent &);
-        void OnStartClicked(wxCommandEvent &);
+    // events
+    void OnOpenInputDialogClicked(wxCommandEvent &);
+    void OnOpenOutputDialogClicked(wxCommandEvent &);
+    void OnStartClicked(wxCommandEvent &);
 
-        wxDECLARE_EVENT_TABLE();
+    // virtual functions from ActionNotebookPage
+    void disableInputElements();
+    void reenableElements();
+    void startProgressbarThread();
+
+    // additional functions
+    void startExposeThread();
+
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif // EXPOSEPAGE_H

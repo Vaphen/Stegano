@@ -5,18 +5,19 @@
 #include "Strings.h"
 
 
-BEGIN_EVENT_TABLE(GUI ,wxFrame)
+BEGIN_EVENT_TABLE(GUI,wxFrame)
     EVT_MENU(wxID_EXIT,  GUI::OnExit)
     EVT_MENU(wxID_ABOUT, GUI::OnAbout)
 END_EVENT_TABLE()
 
 GUI::GUI()
 {
-	Create(nullptr, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
+    Create(nullptr, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
     initializeWindow();
 
     // add a menu bar to the window
-    createMenuBar();
+    createMenuBar()
+    ;
 
     // set status bar
     CreateStatusBar();
@@ -42,7 +43,7 @@ GUI::GUI()
     this->SetSizer(mySizer);
 
     // close event
-	Connect(wxID_ANY,wxEVT_CLOSE_WINDOW,(wxObjectEventFunction)&GUI::OnClose);
+    Connect(wxID_ANY,wxEVT_CLOSE_WINDOW,(wxObjectEventFunction)&GUI::OnClose);
 }
 
 GUI::~GUI()
@@ -52,12 +53,13 @@ GUI::~GUI()
 
 /** \brief Set the window properties
  */
-void GUI::initializeWindow() {
-	SetMinSize(wxSize(550, 750));
-	SetMaxSize(wxSize(550, 750));
-	SetWindowStyleFlag(wxWINDOW_VARIANT_MAX);
-	SetTitle(std::string("Stegano+ V.").append(VERSION));
-	Center();
+void GUI::initializeWindow()
+{
+    SetMinSize(wxSize(550, 750));
+    SetMaxSize(wxSize(550, 750));
+    SetWindowStyleFlag(wxWINDOW_VARIANT_MAX);
+    SetTitle(std::string("Stegano+ V.").append(VERSION));
+    Center();
 }
 
 /** \brief Creates the menu bar with its items and adds it to the main window
@@ -96,9 +98,9 @@ void GUI::OnClose(wxCloseEvent& event)
  */
 void GUI::OnAbout(wxCommandEvent& event)
 {
-        wxMessageBox(_T(ABOUT_MESSAGE),
-                     _T(ABOUT_TITLE),
-                     wxOK | wxICON_INFORMATION);
+    wxMessageBox(_T(ABOUT_MESSAGE),
+                 _T(ABOUT_TITLE),
+                 wxOK | wxICON_INFORMATION);
 }
 
 

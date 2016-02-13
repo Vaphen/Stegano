@@ -4,33 +4,86 @@
 #include <exception>
 
 
-// TODO: change this to real exceptions
-struct SteganoException {
-private:
-    std::string msg;
-    unsigned int code;
-public:
-    SteganoException(const unsigned int &code, const std::string &msg) {
-        this->msg = "SteganoException: " + msg;
-        this->code = code;
-    }
-
-    const std::string &what() {
-        return msg;
-    }
-
-    const unsigned int &errorCode() {
-        return code;
+namespace SteganoException
+{
+class Img2Small : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The container file was too small.";
     }
 };
 
-static const SteganoException img2small  (0x00000001, "Specified image too small.");
-static const SteganoException imgNotFound(0x00000002, "Specified image not found.");
-static const SteganoException imgNotLoaded(0x00000003, "No container image loaded.");
-static const SteganoException fileStreamClosed(0x00000004, "The specified filestream for hideFile() is not open.");
-static const SteganoException hideNumber2Big(0x00000005, "The input number was not valid. Check the documentation for hideNumberInMagickColorRGB().");
-static const SteganoException byteUnitsError(0x00000011, "The struct ByteUnits was created with invalid units (max. 5 units, 5 tens, 2 hundreds).");
-static const SteganoException outputFileNotSpecified(0x00000012, "You perform some action on the outputfile without specifieng it. Call 'setOutputFilePath()' first.");
-static const SteganoException unhideFilesNotSpecified(0x00000013, "You tried to perform the unhide action with unset container-/outputfilepath.");
+class ImgNotFound : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The specified image could not be found.";
+    }
+};
 
+class ImgNotLoaded : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: No container file loaded.";
+    }
+};
+
+class FileStreamClosed : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The specified filestream for hideFile() is not open.";
+    }
+};
+
+class HideNumber2Big : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The input number was not valid. Check the documentation for hideNumberInMagickColorRGB().";
+    }
+};
+
+class ByteUnitsError : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The struct ByteUnits was created with invalid units (max. 5 units, 5 tens, 2 hundreds).";
+    }
+};
+
+class OutputFileNotSpecified : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: You perform some action on the outputfile without specifieng it. Call 'setOutputFilePath()' first.";
+    }
+};
+
+class UnhideFileNotSpecified : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: You tried to perform the unhide action with unset container-/outputfilepath.";
+    }
+};
+
+class HideFileNotExistant : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The file that should be hidden cannot be found.";
+    }
+};
+
+class OutputFileStreamNotGood : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "SteganoError: The output file cannot be opened.\nHave you write-permissions?";
+    }
+};
+}
 #endif // PICTUREEDIT_H
